@@ -1,0 +1,39 @@
+## generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+*~
+\#*#
+*.orig
+*.rej
+.AppleDouble
+.#*
+._*
+.idea
+.bundle
+
+# apple xcode excludes
+demos/growl/xcode/BackChat.io Growl/build
+build/*
+*.pbxuser
+*.mode2v3
+*.mode1v3
+*.perspective
+*.perspectivev3
+*~.nib
+xcuserdata
+
+# java specific
+*.class
+
+project/boot
+project/build/*
+project/plugins/*
+target/*
+.idea
+*.iml
+lib_managed
+target
+dist
