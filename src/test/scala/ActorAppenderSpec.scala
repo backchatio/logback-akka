@@ -20,18 +20,12 @@ class StringListAppender[E] extends AppenderBase[E] {
   val messages = new ListBuffer[String]
   @BeanProperty var layout: Layout[E] = _
 
-  override def stop() {
-    messages.clear()
-    super.stop()
-  }
-
   override def start() {
-    messages.clear()
     Option(layout).filter(_.isStarted).foreach(_ => super.start())
   }
 
   def append(p1: E) {
-    messages += layout.doLayout(p1)
+    synchronized { messages += layout.doLayout(p1) }
   }
 }
 
@@ -108,9 +102,10 @@ class ActorAppenderSpec extends Specification { def is =
       cf.setContext(loggerContext)
       cf.doConfigure(configUrl)
       loggerContext.start()
-//      StatusPrinter.printIfErrorsOccured(loggerContext)
-      StatusPrinter.print(loggerContext)
+      StatusPrinter.printIfErrorsOccured(loggerContext)
+//      StatusPrinter.print(loggerContext)
       latch.tryAwait(2, TimeUnit.SECONDS) // Block until the actors have been started
+      Thread.sleep(500)
     }
 
     def stopActor = {
