@@ -9,11 +9,28 @@ import akka.util.ListenerManagement
 import akka.dispatch.Future
 import ch.qos.logback.core.spi.{AppenderAttachableImpl, AppenderAttachable}
 import ch.qos.logback.core.{Appender, UnsynchronizedAppenderBase}
-import javax.management.remote.rmi._RMIConnection_Stub
+import ch.qos.logback.classic.filter.ThresholdFilter
+import ch.qos.logback.core.filter.Filter
 
 object LogbackActor extends ListenerManagement {
 
   var environment: String = _
+
+  def readEnvironmentKey(onFail: String => Unit = _ => null) = {
+    val envConf = System.getenv("AKKA_MODE") match {
+      case null | "" ⇒ None
+      case value     ⇒ Some(value)
+    }
+
+    val systemConf = System.getProperty("akka.mode") match {
+      case null | "" ⇒ None
+      case value     ⇒ Some(value)
+    }
+    (envConf orElse systemConf) getOrElse {
+      onFail("no environment found, defaulting to development")
+      "development"
+    }
+  }
 
   def notifyLogListeners(evt: ILoggingEvent) {
     notifyListeners(evt)
@@ -45,31 +62,21 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
   @BeanProperty var includeCallerData: Boolean = false
   private val appenders = new AppenderAttachableImpl[E]
 
-  lazy val environment = readEnvironmentKey
+  lazy val environment = LogbackActor.readEnvironmentKey(addWarn _)
 
-  def readEnvironmentKey = {
-    val envConf = System.getenv("AKKA_MODE") match {
-      case null | "" ⇒ None
-      case value     ⇒ Some(value)
-    }
-
-    val systemConf = System.getProperty("akka.mode") match {
-      case null | "" ⇒ None
-      case value     ⇒ Some(value)
-    }
-    (envConf orElse systemConf) getOrElse {
-      addWarn("no environment found, defaulting to development")
-      "development"
-    }
-  }
+  private val filter = new ThresholdFilter().asInstanceOf[Filter[E]]
+  filter.asInstanceOf[ThresholdFilter].setLevel("ERROR")
+  addFilter(filter)
 
   override def stop() {
     if (super.isStarted) super.stop()
+    if (filter.isStarted) filter.start()
     if (isStarted) supervisor.shutdown()
   }
 
   override def start() {
     super.start()
+    if (!filter.isStarted) filter.start()
     LogbackActor.environment = environment
     supervisor = SupervisorFactory(
       SupervisorConfig(

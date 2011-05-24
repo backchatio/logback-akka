@@ -12,8 +12,6 @@
    <appender-ref ref="STR_LIST"/>
   </appender>
 
-  <!--<appender-ref ref="ACTOR" />-->
-
   <root>
     <level value="DEBUG"/>
     <appender-ref ref="ACTOR"/>
