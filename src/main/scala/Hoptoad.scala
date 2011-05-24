@@ -16,6 +16,8 @@ import java.io.File
 import java.net.URLDecoder
 import collection.JavaConverters._
 import com.mojolly.logback.Hoptoad.{Throttle, HoptoadConfig}
+import ch.qos.logback.core.filter.Filter
+import ch.qos.logback.classic.filter.ThresholdFilter
 
 object Hoptoad {
 
@@ -192,6 +194,11 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
   }
   @BeanProperty var applicationUrl = "https://backchat.io"
 
+  private implicit def thf2fe(f: ThresholdFilter) = f.asInstanceOf[Filter[E]]
+  private val filter = new ThresholdFilter()
+  filter.setLevel("ERROR")
+  addFilter(filter)
+
   var environmentName: String = null
   var layout: HoptoadLayout[E] = null
   private var _projectRoot: Option[String] = None
@@ -211,6 +218,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   override def stop() {
     super.stop()
+    if(filter != null && filter.isStarted) filter.stop()
     if(http != null) {
       http.close()
     }
@@ -221,6 +229,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
       addError("You have to provide an api key for hoptoad in the config")
       throw new RuntimeException("Missing Hoptoad API key in logback config.")
     }
+    if (!filter.isStarted) filter.start()
     _projectRoot = {
       val pr = Config.HOME getOrElse (new File(".").getCanonicalPath)
       if (pr == null || pr.trim.isEmpty) {

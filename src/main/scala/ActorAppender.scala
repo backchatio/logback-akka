@@ -64,19 +64,13 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
 
   lazy val environment = LogbackActor.readEnvironmentKey(addWarn _)
 
-  private val filter = new ThresholdFilter().asInstanceOf[Filter[E]]
-  filter.asInstanceOf[ThresholdFilter].setLevel("ERROR")
-  addFilter(filter)
-
   override def stop() {
     if (super.isStarted) super.stop()
-    if (filter.isStarted) filter.start()
     if (isStarted) supervisor.shutdown()
   }
 
   override def start() {
     super.start()
-    if (!filter.isStarted) filter.start()
     LogbackActor.environment = environment
     supervisor = SupervisorFactory(
       SupervisorConfig(
