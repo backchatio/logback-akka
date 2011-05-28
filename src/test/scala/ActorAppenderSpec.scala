@@ -12,9 +12,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import java.util.concurrent.{TimeUnit, ConcurrentSkipListSet}
 import akka.actor.{ActorRef, Actor}
 import org.specs2.specification.{Before, Around}
+import scala.Some
 
 object StringListAppender {
   val messages = new ConcurrentSkipListSet[String]()
+  var latch: Option[StandardLatch] = None
 }
 class StringListAppender[E] extends AppenderBase[E] {
   val messages = new ListBuffer[String]
@@ -25,7 +27,8 @@ class StringListAppender[E] extends AppenderBase[E] {
   }
 
   def append(p1: E) {
-    synchronized { messages += layout.doLayout(p1) }
+    messages += layout.doLayout(p1)
+    StringListAppender.latch foreach { _.open() }
   }
 }
 
@@ -61,23 +64,12 @@ class ActorAppenderSpec extends Specification { def is =
 
   def logToChildAppenders = {
     val logger = withStringListAppender.logger
-    val rootLogger = withStringListAppender.rootLogger
     val latch = new StandardLatch
-    val actor = Actor.actorOf(new Actor {
-      protected def receive = {
-        case evt: ILoggingEvent if evt.getMessage == "the logged message" => latch.open()
-        case _ =>
-      }
-    }).start()
-    LogbackActor.addListener(actor)
+    StringListAppender.latch = Some(latch)
     logger.info("the logged message")
-    latch.tryAwait(2, TimeUnit.SECONDS) must beTrue
-    val op = rootLogger.getAppender("ACTOR").asInstanceOf[ActorAppender[_]]
-    val app = op.getAppender("STR_LIST").asInstanceOf[StringListAppender[_]]
-    LogbackActor.removeListener(actor)
-    actor.stop
+    val res = latch.tryAwait(2, TimeUnit.SECONDS) must beTrue
     withStringListAppender.stopActor
-    app.messages must contain("the logged message")
+    res
   }
 
 
@@ -103,9 +95,6 @@ class ActorAppenderSpec extends Specification { def is =
       cf.doConfigure(configUrl)
       loggerContext.start()
       StatusPrinter.printIfErrorsOccured(loggerContext)
-//      StatusPrinter.print(loggerContext)
-      latch.tryAwait(2, TimeUnit.SECONDS) // Block until the actors have been started
-      Thread.sleep(500)
     }
 
     def stopActor = {

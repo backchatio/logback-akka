@@ -13,7 +13,7 @@ class Project(info: ProjectInfo) extends DefaultProject(info) with AkkaProject {
   lazy val liftModuleConfiguration = ModuleConfiguration("net.liftweb", ScalaToolsSnapshots)
   lazy val scalatraCore = ModuleConfiguration("org.scalatra", SonatypeSnapshots)
 
-  val liftJson = "net.liftweb" %% "lift-json" % "2.4-SNAPSHOT"
+  val liftJson = "net.liftweb" % "lift-json_2.9.0" % "2.4-SNAPSHOT"
 
   // To capture web context
   val scalatra = "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided"
