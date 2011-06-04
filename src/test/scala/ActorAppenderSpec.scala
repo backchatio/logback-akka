@@ -12,12 +12,16 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import java.util.concurrent.{TimeUnit, ConcurrentSkipListSet}
 import akka.actor.{ActorRef, Actor}
 import org.specs2.specification.{Before, Around}
+import scala.Some
+import java.lang.StringBuffer
 
 object StringListAppender {
-  val messages = new ConcurrentSkipListSet[String]()
+  var messages = ListBuffer[String]()
+  var latch: Option[StandardLatch] = None
 }
 class StringListAppender[E] extends AppenderBase[E] {
-  val messages = new ListBuffer[String]
+  import StringListAppender._
+
   @BeanProperty var layout: Layout[E] = _
 
   override def start() {
@@ -25,17 +29,19 @@ class StringListAppender[E] extends AppenderBase[E] {
   }
 
   def append(p1: E) {
-    synchronized { messages += layout.doLayout(p1) }
+    messages += layout.doLayout(p1)
+    latch foreach { _.open() }
   }
 }
-
 class ActorAppenderSpec extends Specification { def is =
 
+  sequential ^
   "An actor appender for logback should" ^
     "log to the child appender" ! withStringListAppender(logToChildAppenders) ^
     "log to a listener actor" ! logToListenerActor ^ end
 
   def logToListenerActor = {
+    StringListAppender.messages = ListBuffer[String]()
     val loggerContext = new LoggerContext
     val configUrl = getClass.getClassLoader.getResource("actor-appender-spec.xml")
     val cf = new JoranConfigurator
@@ -61,23 +67,13 @@ class ActorAppenderSpec extends Specification { def is =
 
   def logToChildAppenders = {
     val logger = withStringListAppender.logger
-    val rootLogger = withStringListAppender.rootLogger
     val latch = new StandardLatch
-    val actor = Actor.actorOf(new Actor {
-      protected def receive = {
-        case evt: ILoggingEvent if evt.getMessage == "the logged message" => latch.open()
-        case _ =>
-      }
-    }).start()
-    LogbackActor.addListener(actor)
+    StringListAppender.messages = ListBuffer[String]()
+    StringListAppender.latch = Some(latch)
     logger.info("the logged message")
-    latch.tryAwait(2, TimeUnit.SECONDS) must beTrue
-    val op = rootLogger.getAppender("ACTOR").asInstanceOf[ActorAppender[_]]
-    val app = op.getAppender("STR_LIST").asInstanceOf[StringListAppender[_]]
-    LogbackActor.removeListener(actor)
-    actor.stop
+    val res = latch.tryAwait(2, TimeUnit.SECONDS) must beTrue
     withStringListAppender.stopActor
-    app.messages must contain("the logged message")
+    res and  (StringListAppender.messages must contain("the logged message"))
   }
 
 
@@ -103,9 +99,6 @@ class ActorAppenderSpec extends Specification { def is =
       cf.doConfigure(configUrl)
       loggerContext.start()
       StatusPrinter.printIfErrorsOccured(loggerContext)
-//      StatusPrinter.print(loggerContext)
-      latch.tryAwait(2, TimeUnit.SECONDS) // Block until the actors have been started
-      Thread.sleep(500)
     }
 
     def stopActor = {

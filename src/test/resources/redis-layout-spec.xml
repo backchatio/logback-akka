@@ -1,0 +1,15 @@
+<configuration>
+
+  <appender name="STR_LIST"
+    class="com.mojolly.logback.tests.StringListAppender2">
+    <layout class="com.mojolly.logback.LogstashRedisLayout">
+      <ApplicationName>logstash-redis-tests</ApplicationName>
+    </layout>
+  </appender>
+
+  <root>
+    <level value="DEBUG"/>
+    <appender-ref ref="STR_LIST"/>
+  </root>
+
+</configuration>
