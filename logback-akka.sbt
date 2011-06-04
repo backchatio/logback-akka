@@ -27,8 +27,10 @@ libraryDependencies ++= Seq(
   "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.6",
   "ch.qos.logback" % "logback-classic" % "0.9.28",
   "redis.clients" % "jedis" % "1.5.2",
-  "org.specs2" %% "specs2" % "1.4" % "test"
+  "org.specs2" %% "specs2" % "1.3" % "test"
 )
+
+parallelExecution in Test := false
 
 testFrameworks += new TestFramework("org.specs2.runner.SpecsFramework")
 

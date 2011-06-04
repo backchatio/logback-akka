@@ -3,18 +3,25 @@ package com.mojolly.logback
 import redis.clients.jedis.exceptions.JedisException
 import redis.clients.jedis.{Jedis, JedisPool}
 import scala.reflect.BeanProperty
-import ch.qos.logback.core.{LayoutBase, UnsynchronizedAppenderBase}
-import net.liftweb.json._
-import JsonDSL._
 import java.util.Locale
 import scala.util.matching.Regex
 import collection.JavaConversions._
+import collection.mutable
+import collection.JavaConverters._
 import ch.qos.logback.classic.spi.{ILoggingEvent}
+import ch.qos.logback.core.{LayoutBase, UnsynchronizedAppenderBase}
+import net.liftweb.json.JsonAST._
+import net.liftweb.json.JsonDSL._
+import net.liftweb.json.{DefaultFormats, Extraction, Printer, JsonParser}
 
+object LogstashRedisLayout {
+  implicit var formats = DefaultFormats
+}
 class LogstashRedisLayout[E] extends LayoutBase[E] {
+  import com.mojolly.logback.LogstashRedisLayout._
   private val TAG_REGEX: Regex = """(?iu)\B#([^,#=!\s./]+)([\s,.]|$)""".r
 
-  var applicationName: String = ""
+  @BeanProperty var applicationName: String = ""
 
   def doLayout(p1: E) = {
     val event = p1.asInstanceOf[ILoggingEvent]
@@ -29,10 +36,11 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
 
     val fields = {
       exceptionFields(event) merge {
-        (event.getMdc ++ Map(
-          "thread_name" -> event.getThreadName,
-          "level" -> event.getLevel.toString,
-          "application" -> applicationName))
+        val mdc = { if (event.getMdc == null) JNothing else Extraction.decompose(event.getMdc.asScala) }
+        (mdc merge
+          ("thread_name" -> event.getThreadName) ~
+          ("level" -> event.getLevel.toString) ~
+          ("application" -> applicationName))
       }
     }
 
@@ -54,7 +62,7 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
         List.empty[StackTraceElement]
       }
       ("error_message" -> th.getMessage) ~
-      ("error" -> th.getClassName)
+      ("error" -> th.getClassName) ~
       ("stack_trace" -> (stea map { stl =>
         val jv: JValue =
           ( "line" -> stl.getLineNumber ) ~
@@ -76,7 +84,6 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
   @BeanProperty var port = 6379
   @BeanProperty var database = 9
   @BeanProperty var queueName: String = _
-  @BeanProperty var applicationName: String = _
 
   private var redisPool: JedisPool = _
 
@@ -96,7 +103,6 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   def append(p1: E) {
     val layout = new LogstashRedisLayout[E]
-    layout.applicationName = applicationName
     withRedis { _.rpush(queueName, layout.doLayout(p1)) }
   }
 
