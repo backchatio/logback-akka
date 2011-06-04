@@ -9,8 +9,6 @@ import akka.util.ListenerManagement
 import akka.dispatch.Future
 import ch.qos.logback.core.spi.{AppenderAttachableImpl, AppenderAttachable}
 import ch.qos.logback.core.{Appender, UnsynchronizedAppenderBase}
-import ch.qos.logback.classic.filter.ThresholdFilter
-import ch.qos.logback.core.filter.Filter
 
 object LogbackActor extends ListenerManagement {
 
