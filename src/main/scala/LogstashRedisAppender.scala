@@ -2,16 +2,19 @@ package com.mojolly.logback
 
 import redis.clients.jedis.exceptions.JedisException
 import redis.clients.jedis.{Jedis, JedisPool}
-import reflect.BeanProperty
+import scala.reflect.BeanProperty
 import ch.qos.logback.core.{LayoutBase, UnsynchronizedAppenderBase}
 import net.liftweb.json._
 import JsonDSL._
-import ch.qos.logback.classic.spi.ILoggingEvent
 import java.util.Locale
-import util.matching.Regex
+import scala.util.matching.Regex
+import collection.JavaConversions._
+import ch.qos.logback.classic.spi.{ILoggingEvent}
 
 class LogstashRedisLayout[E] extends LayoutBase[E] {
   private val TAG_REGEX: Regex = """(?iu)\B#([^,#=!\s./]+)([\s,.]|$)""".r
+
+  var applicationName: String = ""
 
   def doLayout(p1: E) = {
     val event = p1.asInstanceOf[ILoggingEvent]
@@ -24,7 +27,42 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
       ("@source" -> event.getLoggerName) ~
       ("@message" -> event.getFormattedMessage)
 
-    Printer.compact(render(jv))
+    val fields = {
+      exceptionFields(event) merge {
+        (event.getMdc ++ Map(
+          "thread_name" -> event.getThreadName,
+          "level" -> event.getLevel.toString,
+          "application" -> applicationName))
+      }
+    }
+
+    Printer.compact {
+      render {
+        jv merge ("@fields" -> fields)
+      }
+    }
+  }
+
+  private def exceptionFields(event: ILoggingEvent): JValue = {
+    if (event.getThrowableProxy == null) {
+      JNothing
+    } else {
+      val th = event.getThrowableProxy
+      val stea: Seq[StackTraceElement] = if(th.getStackTraceElementProxyArray != null) {
+        th.getStackTraceElementProxyArray.map(_.getStackTraceElement)
+      } else {
+        List.empty[StackTraceElement]
+      }
+      ("error_message" -> th.getMessage) ~
+      ("error" -> th.getClassName)
+      ("stack_trace" -> (stea map { stl =>
+        val jv: JValue =
+          ( "line" -> stl.getLineNumber ) ~
+          ( "file" -> stl.getFileName ) ~
+          ( "method_name" -> stl.getMethodName)
+        jv
+      }))
+    }
   }
 
   private def parseTags(msg: String) = {
@@ -38,6 +76,7 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
   @BeanProperty var port = 6379
   @BeanProperty var database = 9
   @BeanProperty var queueName: String = _
+  @BeanProperty var applicationName: String = _
 
   private var redisPool: JedisPool = _
 
@@ -57,6 +96,7 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   def append(p1: E) {
     val layout = new LogstashRedisLayout[E]
+    layout.applicationName = applicationName
     withRedis { _.rpush(queueName, layout.doLayout(p1)) }
   }
 
