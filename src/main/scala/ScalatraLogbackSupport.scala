@@ -7,7 +7,7 @@ import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
 
-trait LogbackScalatraHandler extends Handler with Logging { self: ScalatraKernel =>
+trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel =>
 
   protected val _cgiParams = new DynamicVariable[Map[String, String]](Map.empty)
 
