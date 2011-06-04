@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
   "se.scalablesolutions.akka" % "akka-stm" % "1.1.2",
   "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.6",
   "ch.qos.logback" % "logback-classic" % "0.9.28",
+  "redis.clients" % "jedis" % "1.5.2",
   "org.specs2" %% "specs2" % "1.4" % "test"
 )
 
