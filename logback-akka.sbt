@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided",
   "org.glassfish" % "javax.servlet" % "3.0" % "provided",
   "com.ning" % "async-http-client" % "1.6.1",
+  "org.scala-tools.time" % "time_2.9.0" % "0.4",
   "se.scalablesolutions.akka" % "akka-stm" % "1.1.2",
   "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.6",
   "ch.qos.logback" % "logback-classic" % "0.9.28",
