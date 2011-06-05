@@ -39,7 +39,7 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
     "AUTH_TYPE" -> request.getAuthType,
     "CONTENT_LENGTH" -> request.getContentLength.toString,
     "CONTENT_TYPE" -> request.getContentType,
-    "DOCUMENT_ROOT" -> request.getServletContext.getRealPath("/"),
+    "DOCUMENT_ROOT" -> servletContext.getRealPath(servletContext.getContextPath),
     "PATH_INFO" -> request.getPathInfo,
     "PATH_TRANSLATED" -> request.getPathTranslated,
     "QUERY_STRING" -> request.getQueryString,
@@ -51,8 +51,8 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
     "SERVER_NAME" -> request.getServerName,
     "SERVER_PORT" -> request.getServerPort.toString,
     "SERVER_PROTOCOL" -> request.getProtocol,
-    "SERVER_SOFTWARE" -> request.getServletContext.getServerInfo
+    "SERVER_SOFTWARE" -> servletContext.getServerInfo
   )
 
-  private def %-(s: String) = URLEncoder.encode(s, "UTF-8")
+  private def %-(s: String) = if (s == null || s.trim.isEmpty) "" else URLEncoder.encode(s, "UTF-8")
 }

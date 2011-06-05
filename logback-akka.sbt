@@ -2,7 +2,7 @@ name := "logback-akka"
 
 version := "0.2-SNAPSHOT"
 
-organization := "com.mojolly"
+organization := "com.mojolly.logback"
 
 scalaVersion := "2.9.0-1"
 
@@ -10,7 +10,7 @@ ideaProjectName := "logback-akka"
 
 ideaProjectGroup := "logback-akka"
 
-scalacOptions ++= Seq("-optimize")
+scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8")
 
 resolvers ++= Seq(
   "GlassFish Repo" at "http://download.java.net/maven/glassfish/",
