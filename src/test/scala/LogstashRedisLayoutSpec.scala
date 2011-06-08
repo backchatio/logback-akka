@@ -36,6 +36,7 @@ import org.slf4j.Logger
 import ch.qos.logback.classic.LoggerContext
 import net.liftweb.json._
 import java.lang.RuntimeException
+import org.specs2.matcher.MustMatchers
 
 object StringListAppender2 {
   val messages = ListBuffer[String]()
@@ -62,8 +63,7 @@ class LogstashRedisLayoutSpec extends Specification { def is =
     "render a regular log statement" ! withLogger("redis-logger-1").renderNormalLog ^
     "render a log statement with an exception" ! withLogger("redis-logger-2").renderExceptionLog ^ end
 
-
-  case class withLogger(loggerName: String) {
+  case class withLogger(loggerName: String) extends MustMatchers {
 
     implicit val formats = DefaultFormats
     var loggerContext: LoggerContext = _
@@ -111,8 +111,9 @@ class LogstashRedisLayoutSpec extends Specification { def is =
             (err \ "stack_trace").extract[List[JValue]] must not(beEmpty)
           }
         }
-
       }
     }
   }
+
 }
+
