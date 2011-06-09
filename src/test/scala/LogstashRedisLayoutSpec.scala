@@ -63,57 +63,58 @@ class LogstashRedisLayoutSpec extends Specification { def is =
     "render a regular log statement" ! withLogger("redis-logger-1").renderNormalLog ^
     "render a log statement with an exception" ! withLogger("redis-logger-2").renderExceptionLog ^ end
 
-  case class withLogger(loggerName: String) extends MustMatchers {
+}
 
-    implicit val formats = DefaultFormats
-    var loggerContext: LoggerContext = _
-    var logger: Logger = _
-    val latch = new StandardLatch
+case class withLogger(loggerName: String) extends MustMatchers {
 
-    def around(t: => Result): Result = {
-      loggerContext = new LoggerContext
-      val configUrl = getClass.getClassLoader.getResource("redis-layout-spec.xml")
-      StringListAppender2.messages.clear
-      val cf = new JoranConfigurator
-      cf.setContext(loggerContext)
-      cf.doConfigure(configUrl)
-      loggerContext.start()
-      logger = loggerContext.getLogger(loggerName)
-      StatusPrinter.printIfErrorsOccured(loggerContext)
-      StringListAppender2.latch = Some(latch)
-      val res: Result = t
-      loggerContext.stop()
-      StatusPrinter.printIfErrorsOccured(loggerContext)
-      res
-    }
+  implicit val formats = DefaultFormats
+  var loggerContext: LoggerContext = _
+  var logger: Logger = _
+  val latch = new StandardLatch
 
-    def renderNormalLog = {
-      around {
-        val ms = "this is a a message with a [fabricated] param"
-        logger.info(ms)
-        (latch.tryAwait(2, TimeUnit.SECONDS) must beTrue) and {
-          val js = JsonParser.parse(StringListAppender2.messages.head)
-          (js \ "@message").extract[String] must_== ms
-        }
-      }
-    }
+  def around(t: => Result): Result = {
+    loggerContext = new LoggerContext
+    val configUrl = getClass.getClassLoader.getResource("redis-layout-spec.xml")
+    StringListAppender2.messages.clear
+    val cf = new JoranConfigurator
+    cf.setContext(loggerContext)
+    cf.doConfigure(configUrl)
+    loggerContext.start()
+    logger = loggerContext.getLogger(loggerName)
+    StatusPrinter.printIfErrorsOccured(loggerContext)
+    StringListAppender2.latch = Some(latch)
+    val res: Result = t
+    loggerContext.stop()
+    StatusPrinter.printIfErrorsOccured(loggerContext)
+    res
+  }
 
-    def renderExceptionLog = around {
-      val ms = "this is a message for an error"
-      try { throw new RuntimeException("the exception message") }
-      catch { case e => logger.error(ms, e) }
+  def renderNormalLog = {
+    around {
+      val ms = "this is a a message with a [fabricated] param"
+      logger.info(ms)
       (latch.tryAwait(2, TimeUnit.SECONDS) must beTrue) and {
         val js = JsonParser.parse(StringListAppender2.messages.head)
-        val msgMatch = (js \ "@message").extract[String] must_== ms
-        val err = (js \ "@fields")
-        msgMatch and {
-          ((err \ "error_message").extract[String] must_== "the exception message") and {
-            (err \ "stack_trace").extract[List[JValue]] must not(beEmpty)
-          }
-        }
+        (js \ "@message").extract[String] must_== ms
       }
     }
   }
 
+  def renderExceptionLog = around {
+    val ms = "this is a message for an error"
+    try { throw new RuntimeException("the exception message") }
+    catch { case e => logger.error(ms, e) }
+    (latch.tryAwait(2, TimeUnit.SECONDS) must beTrue) and {
+      val js = JsonParser.parse(StringListAppender2.messages.head)
+      val msgMatch = (js \ "@message").extract[String] must_== ms
+      val err = (js \ "@fields")
+      msgMatch and {
+        ((err \ "error_message").extract[String] must_== "the exception message") and {
+          (err \ "stack_trace").extract[List[JValue]] must not(beEmpty)
+        }
+      }
+    }
+  }
 }
+
 
