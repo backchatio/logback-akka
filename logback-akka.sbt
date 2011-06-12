@@ -7,10 +7,6 @@ organization := "com.mojolly.logback"
 
 scalaVersion := "2.9.0-1"
 
-ideaProjectName := "logback-akka"
-
-ideaProjectGroup := "logback-akka"
-
 scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8")
 
 resolvers ++= Seq(
@@ -25,8 +21,9 @@ libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided",
   "org.glassfish" % "javax.servlet" % "3.1" % "provided",
   "com.ning" % "async-http-client" % "1.6.3",
-  "org.scala-tools.time" % "time_2.9.0" % "0.4",
+  "org.scala-tools.time" %% "time" % "0.4",
   "se.scalablesolutions.akka" % "akka-stm" % "1.1.2",
+  "org.slf4j" % "slf4j-api" % "1.6.1",
   "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.6",
   "ch.qos.logback" % "logback-classic" % "0.9.28",
   "redis.clients" % "jedis" % "1.5.2",

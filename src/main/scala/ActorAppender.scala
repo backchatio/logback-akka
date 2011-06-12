@@ -107,7 +107,14 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
         evt.prepareForDeferredProcessing()
         if (includeCallerData) evt.getCallerData
         val immutableEvent = LoggingEventVO.build(evt)
-        registry.actorFor[ActorAppender.LogbackActor[_]] foreach { _ ! immutableEvent }
+        // if the actor is running use the actor, if not running go synchronous (most likely during shutdown of an app)
+        val lbActor = registry.actorFor[ActorAppender.LogbackActor[_]]
+        if(lbActor.forall(_.isRunning)) {
+          lbActor foreach { _ ! immutableEvent }
+        } else {
+          addWarn("Can't use the actor for logging, falling back to synchronized appenders loop!")
+          synchronized { appenders appendLoopOnAppenders immutableEvent.asInstanceOf[E] }
+        }
       }
     }
   }
