@@ -28,10 +28,10 @@ import collection.JavaConversions._
 import collection.mutable
 import collection.JavaConverters._
 import ch.qos.logback.classic.spi.{ILoggingEvent}
-import ch.qos.logback.core.{LayoutBase, UnsynchronizedAppenderBase}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.{DefaultFormats, Extraction, Printer, JsonParser}
+import ch.qos.logback.core.{Layout, LayoutBase, UnsynchronizedAppenderBase}
 
 object LogstashRedisLayout {
   implicit var formats = DefaultFormats
@@ -40,7 +40,7 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
   import com.mojolly.logback.LogstashRedisLayout._
   private val TAG_REGEX: Regex = """(?iu)\B#([^,#=!\s./]+)([\s,.]|$)""".r
 
-  @BeanProperty var applicationName: String = ""
+  @BeanProperty var applicationName: String = _
 
   def doLayout(p1: E) = {
     val event = p1.asInstanceOf[ILoggingEvent]
@@ -103,6 +103,7 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
   @BeanProperty var port = 6379
   @BeanProperty var database = 9
   @BeanProperty var queueName: String = _
+  @BeanProperty var layout: Layout[E] = new LogstashRedisLayout[E]
 
   private var redisPool: JedisPool = _
 
@@ -121,7 +122,6 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
   }
 
   def append(p1: E) {
-    val layout = new LogstashRedisLayout[E]
     withRedis { _.rpush(queueName, layout.doLayout(p1)) }
   }
 

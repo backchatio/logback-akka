@@ -3,7 +3,7 @@
   <appender name="STR_LIST"
     class="com.mojolly.logback.tests.StringListAppender2">
     <layout class="com.mojolly.logback.LogstashRedisLayout">
-      <ApplicationName>logstash-redis-tests</ApplicationName>
+      <param name="ApplicationName" value="logstash-redis-tests" />
     </layout>
   </appender>
 

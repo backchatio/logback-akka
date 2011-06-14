@@ -79,7 +79,7 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
   @BeanProperty var includeCallerData: Boolean = false
   private val appenders = new AppenderAttachableImpl[E]
 
-  lazy val environment = LogbackActor.readEnvironmentKey(addWarn _)
+  lazy val environment = LogbackActor.readEnvironmentKey(addInfo _)
 
   override def stop() {
     if (super.isStarted) super.stop()
