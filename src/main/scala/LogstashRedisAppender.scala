@@ -32,6 +32,9 @@ import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.{DefaultFormats, Extraction, Printer, JsonParser}
 import ch.qos.logback.core.{Layout, LayoutBase, UnsynchronizedAppenderBase}
+import org.scala_tools.time._
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{ISODateTimeFormat}  
 
 object LogstashRedisLayout {
   implicit var formats = DefaultFormats
@@ -43,29 +46,36 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
   @BeanProperty var applicationName: String = _
 
   def doLayout(p1: E) = {
-    val event = p1.asInstanceOf[ILoggingEvent]
-    val msg = event.getFormattedMessage
-    val tags = parseTags(msg)
-    val jv: JValue =
-      ("@timestamp" -> event.getTimeStamp) ~
-      ("@tags" -> tags) ~
-      ("@type" -> "string") ~
-      ("@source" -> event.getLoggerName) ~
-      ("@message" -> event.getFormattedMessage)
+    try {
+      val event = p1.asInstanceOf[ILoggingEvent]
+      val msg = event.getFormattedMessage
+      val tags = parseTags(msg)
+      val jv: JValue =
+        ("@timestamp" -> new DateTime(event.getTimeStamp).toString(ISODateTimeFormat.dateTime.withZone(DateTimeZone.UTC))) ~
+        ("@tags" -> tags) ~
+        ("@type" -> "string") ~
+        ("@source" -> event.getLoggerName) ~
+        ("@message" -> event.getFormattedMessage)
 
-    val fields = {
-      exceptionFields(event) merge {
-        val mdc = { if (event.getMdc == null) JNothing else Extraction.decompose(event.getMdc.asScala) }
-        (mdc merge
-          ("thread_name" -> event.getThreadName) ~
-          ("level" -> event.getLevel.toString) ~
-          ("application" -> applicationName))
+      val fields = {
+        exceptionFields(event) merge {
+          val mdc = { if (event.getMdc == null) JNothing else Extraction.decompose(event.getMdc.asScala) }
+          (mdc merge
+            ("thread_name" -> event.getThreadName) ~
+            ("level" -> event.getLevel.toString) ~
+            ("application" -> applicationName))
+        }
       }
-    }
 
-    Printer.compact {
-      render {
-        jv merge ("@fields" -> fields)
+      Printer.compact {
+        render {
+          jv merge ("@fields" -> fields)
+        }
+      }
+    } catch {
+      case e => {
+        addError("There was a problem formatting the event:", e)
+        ""
       }
     }
   }
@@ -122,7 +132,14 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
   }
 
   def append(p1: E) {
-    withRedis { _.rpush(queueName, layout.doLayout(p1)) }
+    withRedis { redis =>
+      val msg = layout.doLayout(p1)
+      if(msg != null && !msg.trim.isEmpty) {
+        redis.rpush(queueName, msg)
+      } else {
+        0L
+      }
+    }
   }
 
   def returnClient(client: Jedis) {
@@ -156,6 +173,7 @@ class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
     cl
   } catch {
     case e: JedisException => {
+      addError("There was an error when creating the redis client in the logback appender", e)
       if(redisPool != null) { redisPool.destroy() }
       redisPool = createPool
       val sec = redisPool.getResource
