@@ -107,7 +107,7 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
   }
 
 }
-class LogstashRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
+class LogbackRedisAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   @BeanProperty var host = "localhost"
   @BeanProperty var port = 6379
