@@ -32,9 +32,8 @@ import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.{DefaultFormats, Extraction, Printer, JsonParser}
 import ch.qos.logback.core.{Layout, LayoutBase, UnsynchronizedAppenderBase}
-import org.scala_tools.time._
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{ISODateTimeFormat}  
+import org.scala_tools.time.Imports._
+import org.joda.time.format.{ISODateTimeFormat}
 
 object LogstashRedisLayout {
   implicit var formats = DefaultFormats
