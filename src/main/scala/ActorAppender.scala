@@ -22,26 +22,26 @@ package mojolly.logback
 import akka.config.Supervision._
 import akka.actor._
 import akka.actor.Actor._
-import ch.qos.logback.classic.spi.{LoggingEventVO, ILoggingEvent}
+import ch.qos.logback.classic.spi.{ LoggingEventVO, ILoggingEvent }
 import reflect.BeanProperty
 import akka.util.ListenerManagement
 import akka.dispatch.Future
-import ch.qos.logback.core.spi.{AppenderAttachableImpl, AppenderAttachable}
-import ch.qos.logback.core.{Appender, UnsynchronizedAppenderBase}
+import ch.qos.logback.core.spi.{ AppenderAttachableImpl, AppenderAttachable }
+import ch.qos.logback.core.{ Appender, UnsynchronizedAppenderBase }
 
 object LogbackActor extends ListenerManagement {
 
   var environment: String = _
 
-  def readEnvironmentKey(onFail: String => Unit = _ => null) = {
+  def readEnvironmentKey(onFail: String ⇒ Unit = _ ⇒ null) = {
     val envConf = System.getenv("AKKA_MODE") match {
       case null | "" ⇒ None
-      case value     ⇒ Some(value)
+      case value ⇒ Some(value)
     }
 
     val systemConf = System.getProperty("akka.mode") match {
       case null | "" ⇒ None
-      case value     ⇒ Some(value)
+      case value ⇒ Some(value)
     }
     (envConf orElse systemConf) getOrElse {
       onFail("no environment found, defaulting to development")
@@ -61,13 +61,13 @@ object ActorAppender {
   class LogbackActor[E <: ILoggingEvent](appenders: AppenderAttachableImpl[E]) extends Actor {
 
     protected def receive = {
-      case evt: ILoggingEvent => {
+      case evt: ILoggingEvent ⇒ {
         Future({
           appenders.appendLoopOnAppenders(evt.asInstanceOf[E])
           LogbackActor.notifyLogListeners(evt)
         }, 1000)
       }
-      case 'Start => LogbackActor.notifyStart
+      case 'Start ⇒ LogbackActor.notifyStart
     }
   }
 }
@@ -76,7 +76,8 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
 
   private var supervisor: Supervisor = _
 
-  @BeanProperty var includeCallerData: Boolean = false
+  @BeanProperty
+  var includeCallerData: Boolean = false
   private val appenders = new AppenderAttachableImpl[E]
 
   lazy val environment = LogbackActor.readEnvironmentKey(addInfo _)
@@ -95,21 +96,21 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
         Supervise(
           actorOf(new ActorAppender.LogbackActor(appenders)),
           Permanent) ::
-        Nil,
-      (actorRef, args) => {
-        addError("Too many restarts for %s".format(args.victim.getClass.getSimpleName), args.lastExceptionCausingRestart)
-      })).newInstance.start
+          Nil,
+        (actorRef, args) ⇒ {
+          addError("Too many restarts for %s".format(args.victim.getClass.getSimpleName), args.lastExceptionCausingRestart)
+        })).newInstance.start
   }
 
   def append(p1: E) {
     p1 match {
-      case evt: ILoggingEvent => {
+      case evt: ILoggingEvent ⇒ {
         evt.prepareForDeferredProcessing()
         if (includeCallerData) evt.getCallerData
         val immutableEvent = LoggingEventVO.build(evt)
         // if the actor is running use the actor, if not running go synchronous (most likely during shutdown of an app)
         val lbActor = registry.actorFor[ActorAppender.LogbackActor[_]]
-        if(lbActor.forall(_.isRunning)) {
+        if (lbActor.forall(_.isRunning)) {
           lbActor foreach { _ ! immutableEvent }
         } else {
           addWarn("Can't use the actor for logging, falling back to synchronized appenders loop!")

@@ -22,17 +22,17 @@ package mojolly.logback
 import akka.actor._
 import Actor._
 
-import com.ning.http.client.filter.{IOExceptionFilter, FilterContext, ResponseFilter}
+import com.ning.http.client.filter.{ IOExceptionFilter, FilterContext, ResponseFilter }
 import com.ning.http.client._
 import akka.config.Config
 import ch.qos.logback.classic.spi.ILoggingEvent
 import reflect.BeanProperty
 import java.util.concurrent.atomic.AtomicBoolean
-import ch.qos.logback.core.{UnsynchronizedAppenderBase, LayoutBase}
+import ch.qos.logback.core.{ UnsynchronizedAppenderBase, LayoutBase }
 import java.io.File
 import java.net.URLDecoder
 import collection.JavaConverters._
-import mojolly.logback.Hoptoad.{Throttle, HoptoadConfig}
+import mojolly.logback.Hoptoad.{ Throttle, HoptoadConfig }
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.classic.filter.ThresholdFilter
 import org.scala_tools.time.Imports._
@@ -40,13 +40,13 @@ import org.scala_tools.time.Imports._
 object Hoptoad {
 
   val REQUEST_PATH = "REQUEST_PATH"
-  val REQUEST_APP = "REQUEST_APP"  // maps to a scalatra servlet
+  val REQUEST_APP = "REQUEST_APP" // maps to a scalatra servlet
   val REQUEST_PARAMS = "REQUEST_PARAMS"
   val SESSION_PARAMS = "SESSION_PARAMS"
   val CGI_PARAMS = "CGI_PARAMS"
 
   case class Backtrace(file: String, number: Int, methodName: String) {
-    def toXml = <line method={methodName} file={file} number={number.toString}></line>
+    def toXml = <line method={ methodName } file={ file } number={ number.toString }></line>
   }
 
   object Var {
@@ -58,51 +58,51 @@ object Hoptoad {
         } else {
           readQsPair(pairs)
         }
-        mapped map { case (k, v) => Var(k, v.mkString(", ")) } toList
+        mapped map { case (k, v) ⇒ Var(k, v.mkString(", ")) } toList
       }
     }
 
     private def readQsPair(pair: String, current: Map[String, List[String]] = Map.empty) = {
-      (pair split '=' toList) map { s => if(s != null && !s.trim.isEmpty) URLDecoder.decode(s, "UTF-8") else "" } match {
-        case item :: Nil => current + (item -> List[String]())
-        case item :: rest =>
-          if(!current.contains(item)) current + ( item -> rest ) else (current + (item -> (rest ::: current(item)).distinct))
-        case _ => current
+      (pair split '=' toList) map { s ⇒ if (s != null && !s.trim.isEmpty) URLDecoder.decode(s, "UTF-8") else "" } match {
+        case item :: Nil ⇒ current + (item -> List[String]())
+        case item :: rest ⇒
+          if (!current.contains(item)) current + (item -> rest) else (current + (item -> (rest ::: current(item)).distinct))
+        case _ ⇒ current
       }
     }
   }
 
-  case class  Var(key: String, value: String) {
-    def toXml = <val key={key}>{value}</val>
+  case class Var(key: String, value: String) {
+    def toXml = <val key={ key }>{ value }</val>
   }
 
   case class Request(url: String, component: String,
-              params: List[Var] = Nil, sessions: List[Var] = Nil,
-              cgi_data: List[Var] = Nil) {
+    params: List[Var] = Nil, sessions: List[Var] = Nil,
+    cgi_data: List[Var] = Nil) {
 
-    def paramsXml = <params>{params.map(_.toXml)}</params>
-    def sessionsXml = <sessions>{sessions.map(_.toXml)}</sessions>
-    def cgiDataXml = <cgi-data>{cgi_data.map(_.toXml)}</cgi-data>
+    def paramsXml = <params>{ params.map(_.toXml) }</params>
+    def sessionsXml = <sessions>{ sessions.map(_.toXml) }</sessions>
+    def cgiDataXml = <cgi-data>{ cgi_data.map(_.toXml) }</cgi-data>
 
     def toXml =
       <request>
-        <url>{url}</url>
-        <component>{component}</component>
-        {if (params.length > 0) paramsXml}
-        {if (sessions.length > 0) sessionsXml}
-        {if (cgi_data.length > 0) cgiDataXml}
+        <url>{ url }</url>
+        <component>{ component }</component>
+        { if (params.length > 0) paramsXml }
+        { if (sessions.length > 0) sessionsXml }
+        { if (cgi_data.length > 0) cgiDataXml }
       </request>
   }
   case class HoptoadConfig(
-          applicationName: String,
-          applicationVersion: String,
-          applicationUrl: String,
-          apiKey: String,
-          useSsl: Boolean,
-          userAgent: String,
-          socketTimeout: Int,
-          environmentName: String,
-          projectRoot: Option[String] = None)
+    applicationName: String,
+    applicationVersion: String,
+    applicationUrl: String,
+    apiKey: String,
+    useSsl: Boolean,
+    userAgent: String,
+    socketTimeout: Int,
+    environmentName: String,
+    projectRoot: Option[String] = None)
 
   object HoptoadNotice {
 
@@ -119,7 +119,7 @@ object Hoptoad {
 
     private def readRequest(config: HoptoadConfig, evt: ILoggingEvent): Option[Request] = {
       val mdc = evt.getMdc.asScala
-      mdc.get(REQUEST_PATH) map { path =>
+      mdc.get(REQUEST_PATH) map { path ⇒
         Request(
           path,
           mdc.get(REQUEST_APP) getOrElse config.applicationName,
@@ -130,35 +130,34 @@ object Hoptoad {
     }
 
     private def readBacktraces(evt: ILoggingEvent) = {
-      evt.getCallerData map { stl => Backtrace(stl.getFileName, stl.getLineNumber, stl.getMethodName) }
+      evt.getCallerData map { stl ⇒ Backtrace(stl.getFileName, stl.getLineNumber, stl.getMethodName) }
     }
   }
 
   case class HoptoadNotice(
-               config: HoptoadConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
+    config: HoptoadConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
 
     def toXml =
       <notice version="2.0">
-        <api-key>{config.apiKey}</api-key>
+        <api-key>{ config.apiKey }</api-key>
         <notifier>
-          <name>{config.applicationName}</name>
-          <version>{config.applicationVersion}</version>
-          <url>{config.applicationUrl}</url>
+          <name>{ config.applicationName }</name>
+          <version>{ config.applicationVersion }</version>
+          <url>{ config.applicationUrl }</url>
         </notifier>
         <error>
-          <class>{clazz}</class>
-          <message>{message}</message>
-          <backtrace>{backtraces.map(_.toXml)}</backtrace>
+          <class>{ clazz }</class>
+          <message>{ message }</message>
+          <backtrace>{ backtraces.map(_.toXml) }</backtrace>
         </error>
-        {request.map(_.toXml).getOrElse(scala.xml.Comment("No request was set"))}
+        { request.map(_.toXml).getOrElse(scala.xml.Comment("No request was set")) }
         <server-environment>
-          {config.projectRoot.map(x => <project-root>{x}</project-root>).getOrElse(scala.xml.Comment("No project root was set"))}
-          <environment-name>{config.environmentName}</environment-name>
+          { config.projectRoot.map(x ⇒ <project-root>{ x }</project-root>).getOrElse(scala.xml.Comment("No project root was set")) }
+          <environment-name>{ config.environmentName }</environment-name>
         </server-environment>
       </notice>
 
   }
-
 
   class MojollyDuration(duration: Duration) {
     def doubled = (duration.millis * 2).toDuration
@@ -191,16 +190,23 @@ class HoptoadLayout[E] extends LayoutBase[E] {
 
 class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
 
-  @BeanProperty var apiKey: String = null
-  @BeanProperty var useSsl: Boolean = false
-  @BeanProperty var userAgent: String = "HoptoadClient/1.0 (compatible; Mozilla/5.0; AsyncHttpClient +http://mojolly.com)"
-  @BeanProperty var socketTimeout: Int = 1.minute.millis.toInt
-  @BeanProperty var applicationName = "Mojolly Hoptoad Notifier"
-  @BeanProperty var applicationVersion = {
+  @BeanProperty
+  var apiKey: String = null
+  @BeanProperty
+  var useSsl: Boolean = false
+  @BeanProperty
+  var userAgent: String = "HoptoadClient/1.0 (compatible; Mozilla/5.0; AsyncHttpClient +http://mojolly.com)"
+  @BeanProperty
+  var socketTimeout: Int = 1.minute.millis.toInt
+  @BeanProperty
+  var applicationName = "Mojolly Hoptoad Notifier"
+  @BeanProperty
+  var applicationVersion = {
     val implVersion = getClass.getPackage.getImplementationVersion
-    if(implVersion == null || implVersion.trim().isEmpty) "0.0.1" else implVersion
+    if (implVersion == null || implVersion.trim().isEmpty) "0.0.1" else implVersion
   }
-  @BeanProperty var applicationUrl = "https://backchat.io"
+  @BeanProperty
+  var applicationUrl = "https://backchat.io"
 
   private implicit def thf2fe(f: ThresholdFilter) = f.asInstanceOf[Filter[E]]
   private val filter = new ThresholdFilter()
@@ -212,13 +218,13 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
   private var _projectRoot: Option[String] = None
 
   private val httpConfig = new AsyncHttpClientConfig.Builder()
-        .addIOExceptionFilter(throttleTcp)
-        .addResponseFilter(throttleHttp)
-        .setUserAgent(userAgent)
-        .setConnectionTimeoutInMs(socketTimeout)
-        .setMaximumConnectionsTotal(1)
-        .setMaxRequestRetry(3)
-        .build
+    .addIOExceptionFilter(throttleTcp)
+    .addResponseFilter(throttleHttp)
+    .setUserAgent(userAgent)
+    .setConnectionTimeoutInMs(socketTimeout)
+    .setMaximumConnectionsTotal(1)
+    .setMaxRequestRetry(3)
+    .build
 
   private lazy val http = new AsyncHttpClient(httpConfig)
 
@@ -226,8 +232,8 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   override def stop() {
     super.stop()
-    if(filter != null && filter.isStarted) filter.stop()
-    if(http != null) {
+    if (filter != null && filter.isStarted) filter.stop()
+    if (http != null) {
       http.close()
     }
   }
@@ -276,7 +282,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
       def filter(context: FilterContext[_]): FilterContext[_] = {
         addInfo("Filtering response for status: %s".format(context.getResponseStatus.getStatusCode))
 
-        if(context.getResponseStatus == null || context.getResponseStatus.getStatusCode > 200) {
+        if (context.getResponseStatus == null || context.getResponseStatus.getStatusCode > 200) {
           throttle()
           new FilterContext.FilterContextBuilder(context).request(context.getRequest).replayRequest(true).build
         } else context
@@ -289,7 +295,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
       private val throttle = Throttle(250.millis, 16.seconds)
       def filter(context: FilterContext[_]): FilterContext[_] = {
         addInfo("Filtering IOException: %s" format context.getResponseStatus, context.getIOException)
-        if(context.getIOException != null) {
+        if (context.getIOException != null) {
           throttle()
           new FilterContext.FilterContextBuilder(context).request(context.getRequest).replayRequest(true).build
         } else context

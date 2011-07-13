@@ -1,7 +1,9 @@
+import com.github.oforero.sbtformatter.SbtFormatter._
+import com.github.oforero.sbtformatter.SbtFormatterSettings._
 
 name := "logback-akka"
 
-version := "0.3"
+version := "0.4-SNAPSHOT"
 
 organization := "com.mojolly.logback"
 
@@ -49,3 +51,15 @@ publishTo <<= (version) { version: String =>
   else                                   Some("releases" at nexus+"releases/")
 }
 
+seq( formatterPreferences : _*) 
+
+seq( 
+  indentLocalDefs := false,
+  spaceBeforeColon := false,
+  spaceInsideBrackets := false,
+  spaceInsideParentheses := false,
+  preserveDanglingCloseParenthesis := false,
+  compactStringConcatenation := false
+) 
+
+seq( formatterTasks : _* )

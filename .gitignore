@@ -37,4 +37,4 @@ target/*
 lib_managed
 target
 dist
-/nbproject/private/
+/nbproject/private/*.sublime-project
