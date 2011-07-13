@@ -1,4 +1,23 @@
-package com.mojolly.logback
+/*
+ * The MIT License (MIT)
+ * Copyright (c) 2011 Mojolly Ltd.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+package mojolly.logback
 
 import akka.config.Supervision._
 import akka.actor._
@@ -9,8 +28,6 @@ import akka.util.ListenerManagement
 import akka.dispatch.Future
 import ch.qos.logback.core.spi.{AppenderAttachableImpl, AppenderAttachable}
 import ch.qos.logback.core.{Appender, UnsynchronizedAppenderBase}
-import ch.qos.logback.classic.filter.ThresholdFilter
-import ch.qos.logback.core.filter.Filter
 
 object LogbackActor extends ListenerManagement {
 
@@ -62,7 +79,7 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
   @BeanProperty var includeCallerData: Boolean = false
   private val appenders = new AppenderAttachableImpl[E]
 
-  lazy val environment = LogbackActor.readEnvironmentKey(addWarn _)
+  lazy val environment = LogbackActor.readEnvironmentKey(addInfo _)
 
   override def stop() {
     if (super.isStarted) super.stop()
@@ -90,7 +107,14 @@ class ActorAppender[E <: ILoggingEvent] extends UnsynchronizedAppenderBase[E] wi
         evt.prepareForDeferredProcessing()
         if (includeCallerData) evt.getCallerData
         val immutableEvent = LoggingEventVO.build(evt)
-        registry.actorFor[ActorAppender.LogbackActor[_]] foreach { _ ! immutableEvent }
+        // if the actor is running use the actor, if not running go synchronous (most likely during shutdown of an app)
+        val lbActor = registry.actorFor[ActorAppender.LogbackActor[_]]
+        if(lbActor.forall(_.isRunning)) {
+          lbActor foreach { _ ! immutableEvent }
+        } else {
+          addWarn("Can't use the actor for logging, falling back to synchronized appenders loop!")
+          synchronized { appenders appendLoopOnAppenders immutableEvent.asInstanceOf[E] }
+        }
       }
     }
   }

@@ -1,4 +1,23 @@
-package com.mojolly.logback
+/*
+ * The MIT License (MIT)
+ * Copyright (c) 2011 Mojolly Ltd.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+package mojolly.logback
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.scalatra.{ScalatraKernel, Handler}
@@ -7,7 +26,7 @@ import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
 
-trait LogbackScalatraHandler extends Handler with Logging { self: ScalatraKernel =>
+trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel =>
 
   protected val _cgiParams = new DynamicVariable[Map[String, String]](Map.empty)
 
@@ -39,7 +58,7 @@ trait LogbackScalatraHandler extends Handler with Logging { self: ScalatraKernel
     "AUTH_TYPE" -> request.getAuthType,
     "CONTENT_LENGTH" -> request.getContentLength.toString,
     "CONTENT_TYPE" -> request.getContentType,
-    "DOCUMENT_ROOT" -> request.getServletContext.getRealPath("/"),
+    "DOCUMENT_ROOT" -> servletContext.getRealPath(servletContext.getContextPath),
     "PATH_INFO" -> request.getPathInfo,
     "PATH_TRANSLATED" -> request.getPathTranslated,
     "QUERY_STRING" -> request.getQueryString,
@@ -51,8 +70,8 @@ trait LogbackScalatraHandler extends Handler with Logging { self: ScalatraKernel
     "SERVER_NAME" -> request.getServerName,
     "SERVER_PORT" -> request.getServerPort.toString,
     "SERVER_PROTOCOL" -> request.getProtocol,
-    "SERVER_SOFTWARE" -> request.getServletContext.getServerInfo
+    "SERVER_SOFTWARE" -> servletContext.getServerInfo
   )
 
-  private def %-(s: String) = URLEncoder.encode(s, "UTF-8")
+  private def %-(s: String) = if (s == null || s.trim.isEmpty) "" else URLEncoder.encode(s, "UTF-8")
 }
