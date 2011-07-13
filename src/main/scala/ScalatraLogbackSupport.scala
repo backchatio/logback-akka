@@ -17,7 +17,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mojolly.logback
+package mojolly.logback
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.scalatra.{ScalatraKernel, Handler}

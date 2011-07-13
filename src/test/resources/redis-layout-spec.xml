@@ -1,8 +1,8 @@
 <configuration>
 
   <appender name="STR_LIST"
-    class="com.mojolly.logback.tests.StringListAppender2">
-    <layout class="com.mojolly.logback.LogstashRedisLayout">
+    class="mojolly.logback.tests.StringListAppender2">
+    <layout class="mojolly.logback.LogstashRedisLayout">
       <param name="ApplicationName" value="logstash-redis-tests" />
     </layout>
   </appender>

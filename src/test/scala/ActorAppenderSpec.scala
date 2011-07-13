@@ -17,7 +17,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mojolly.logback
+package mojolly.logback
 
 import org.specs2.Specification
 import ch.qos.logback.classic.{LoggerContext}
@@ -31,7 +31,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import java.util.concurrent.{TimeUnit, ConcurrentSkipListSet}
 import akka.actor.{ActorRef, Actor}
 import org.specs2.specification.{Before, Around}
-import scala.Some
 import java.lang.StringBuffer
 
 object StringListAppender {

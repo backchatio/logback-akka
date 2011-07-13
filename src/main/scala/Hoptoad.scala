@@ -17,7 +17,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mojolly.logback
+package mojolly.logback
 
 import akka.actor._
 import Actor._
@@ -34,7 +34,7 @@ import ch.qos.logback.core.{UnsynchronizedAppenderBase, LayoutBase}
 import java.io.File
 import java.net.URLDecoder
 import collection.JavaConverters._
-import com.mojolly.logback.Hoptoad.{Throttle, HoptoadConfig}
+import mojolly.logback.Hoptoad.{Throttle, HoptoadConfig}
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.classic.filter.ThresholdFilter
 
@@ -160,6 +160,14 @@ object Hoptoad {
 
   }
 
+
+  class MojollyDuration(duration: Duration) {
+    def doubled: Duration = (duration.toMillis * 2).millis
+    def max(upperBound: Duration) = if (duration > upperBound) upperBound else duration
+  }
+
+  implicit def duration2mojollyDuration(dur: Duration) = new MojollyDuration(dur)
+
   /**
    * Throttle
    *
@@ -167,27 +175,9 @@ object Hoptoad {
    */
   case class Throttle(delay: Duration, maxWait: Duration) {
 
-    private var throttleInterval = delay
-    private val _isAtMax = new AtomicBoolean(false)
-
-    def isAtMax = _isAtMax.get()
-
-    def throttle = {
-      Thread.sleep(throttleInterval.toMillis)
-
-      // Double the interval to give some more time to recover
-      throttleInterval = throttleInterval + throttleInterval
-
-      // Don't wait longer than the maxWait
-      if(throttleInterval >= maxWait) {
-        _isAtMax.set(true)
-        throttleInterval = maxWait
-      }
-    }
-
-    def reset() {
-      throttleInterval = delay
-      _isAtMax.set(false)
+    def apply() = {
+      Thread sleep delay.toMillis
+      this.copy(delay = delay.doubled max maxWait)
     }
   }
 
@@ -288,7 +278,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
         addInfo("Filtering response for status: %s".format(context.getResponseStatus.getStatusCode))
 
         if(context.getResponseStatus == null || context.getResponseStatus.getStatusCode > 200) {
-          throttle.throttle
+          throttle()
           new FilterContext.FilterContextBuilder(context).request(context.getRequest).replayRequest(true).build
         } else context
       }
@@ -301,7 +291,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
       def filter(context: FilterContext[_]): FilterContext[_] = {
         addInfo("Filtering IOException: %s" format context.getResponseStatus, context.getIOException)
         if(context.getIOException != null) {
-          throttle.throttle
+          throttle()
           new FilterContext.FilterContextBuilder(context).request(context.getRequest).replayRequest(true).build
         } else context
       }

@@ -17,14 +17,14 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mojolly.logback.tests
+package mojolly.logback.tests
 
 import org.specs2.Specification
 import org.specs2.specification.Around
 import org.specs2.execute.Result
 import org.slf4j.helpers.MarkerIgnoringBase
 import org.multiverse.api.latches.StandardLatch
-import com.mojolly.logback.StringListAppender
+import mojolly.logback.StringListAppender
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.util.StatusPrinter
 import collection.JavaConversions._

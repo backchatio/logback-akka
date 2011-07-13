@@ -17,7 +17,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mojolly.logback
+package mojolly.logback
 
 import redis.clients.jedis.exceptions.JedisException
 import redis.clients.jedis.{Jedis, JedisPool}
@@ -40,7 +40,7 @@ object LogstashRedisLayout {
   implicit var formats = DefaultFormats
 }
 class LogstashRedisLayout[E] extends LayoutBase[E] {
-  import com.mojolly.logback.LogstashRedisLayout._
+  import mojolly.logback.LogstashRedisLayout._
   private val TAG_REGEX: Regex = """(?iu)\B#([^,#=!\s./]+)([\s,.]|$)""".r
 
   @BeanProperty var applicationName: String = _

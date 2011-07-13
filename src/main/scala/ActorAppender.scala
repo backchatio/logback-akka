@@ -17,7 +17,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mojolly.logback
+package mojolly.logback
 
 import akka.config.Supervision._
 import akka.actor._

@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "net.liftweb" %% "lift-json" % "2.4-M1",
   "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided",
   "org.glassfish" % "javax.servlet" % "3.1" % "provided",
-  "com.ning" % "async-http-client" % "1.6.3",
+  "com.ning" % "async-http-client" % "1.6.4",
   "org.scala-tools.time" %% "time" % "0.4",
   "se.scalablesolutions.akka" % "akka-stm" % "1.1.3",
   "org.slf4j" % "slf4j-api" % "1.6.1",
