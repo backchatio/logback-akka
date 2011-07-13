@@ -1,13 +1,13 @@
 
 name := "logback-akka"
 
-version := "0.3-SNAPSHOT"
+version := "0.3"
 
 organization := "com.mojolly.logback"
 
 scalaVersion := "2.9.0-1"
 
-scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8")
+scalacOptions ++= Seq("-optimize", "-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8", "-P:continuations:enable")
 
 resolvers ++= Seq(
   "GlassFish Repo" at "http://download.java.net/maven/glassfish/",
@@ -26,20 +26,26 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.6.1",
   "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.6",
   "ch.qos.logback" % "logback-classic" % "0.9.28",
-  "redis.clients" % "jedis" % "1.5.2",
+  "redis.clients" % "jedis" % "1.5.2" % "provided",
   "org.specs2" %% "specs2" % "1.5" % "test"
 )
 
+libraryDependencies ++= Seq(
+  compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.0-1"),
+  compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
+)
+
+autoCompilerPlugins := true
 
 parallelExecution in Test := false
 
 testFrameworks += new TestFramework("org.specs2.runner.SpecsFramework")
 
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+credentials += Credentials(Path.userHome / ".ivy2" / ".scala_tools_credentials")
 
 publishTo <<= (version) { version: String =>
-  val nexus = "http://maven.mojolly.com/content/repositories/"
-  if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus+"snapshots/")
+  val nexus = "http://nexus.scala-tools.org/content/repositories/"
+  if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus+"snapshots/") 
   else                                   Some("releases" at nexus+"releases/")
 }
 

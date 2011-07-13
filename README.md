@@ -9,3 +9,12 @@ Implements a logback appender and layout for the following items:
 This is pretty much a work in progress at this point.
 If those three appenders are implemented then I'll publish it to scala-tools.
   
+## Where to get?
+
+This library is published to scala-tools.org
+
+In sbt:
+
+```sbt
+libraryDependencies += "com.mojolly.logback" %% "logback-akka" % "0.3"
+```

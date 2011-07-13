@@ -27,8 +27,6 @@ import com.ning.http.client._
 import akka.config.Config
 import ch.qos.logback.classic.spi.ILoggingEvent
 import reflect.BeanProperty
-import akka.util.Duration
-import akka.util.duration._
 import java.util.concurrent.atomic.AtomicBoolean
 import ch.qos.logback.core.{UnsynchronizedAppenderBase, LayoutBase}
 import java.io.File
@@ -37,6 +35,7 @@ import collection.JavaConverters._
 import mojolly.logback.Hoptoad.{Throttle, HoptoadConfig}
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.classic.filter.ThresholdFilter
+import org.scala_tools.time.Imports._
 
 object Hoptoad {
 
@@ -162,7 +161,7 @@ object Hoptoad {
 
 
   class MojollyDuration(duration: Duration) {
-    def doubled: Duration = (duration.toMillis * 2).millis
+    def doubled = (duration.millis * 2).toDuration
     def max(upperBound: Duration) = if (duration > upperBound) upperBound else duration
   }
 
@@ -176,7 +175,7 @@ object Hoptoad {
   case class Throttle(delay: Duration, maxWait: Duration) {
 
     def apply() = {
-      Thread sleep delay.toMillis
+      Thread sleep delay.millis
       this.copy(delay = delay.doubled max maxWait)
     }
   }
@@ -195,7 +194,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
   @BeanProperty var apiKey: String = null
   @BeanProperty var useSsl: Boolean = false
   @BeanProperty var userAgent: String = "HoptoadClient/1.0 (compatible; Mozilla/5.0; AsyncHttpClient +http://mojolly.com)"
-  @BeanProperty var socketTimeout: Int = 1.minute.toMillis.toInt
+  @BeanProperty var socketTimeout: Int = 1.minute.millis.toInt
   @BeanProperty var applicationName = "Mojolly Hoptoad Notifier"
   @BeanProperty var applicationVersion = {
     val implVersion = getClass.getPackage.getImplementationVersion
