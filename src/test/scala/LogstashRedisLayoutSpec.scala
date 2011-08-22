@@ -28,9 +28,9 @@ import mojolly.logback.StringListAppender
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.util.StatusPrinter
 import collection.JavaConversions._
-import java.util.concurrent.{ConcurrentSkipListSet, TimeUnit}
+import java.util.concurrent.{ ConcurrentSkipListSet, TimeUnit }
 import reflect.BeanProperty
-import ch.qos.logback.core.{Layout, AppenderBase}
+import ch.qos.logback.core.{ Layout, AppenderBase }
 import collection.mutable.ListBuffer
 import org.slf4j.Logger
 import ch.qos.logback.classic.LoggerContext
@@ -45,10 +45,11 @@ object StringListAppender2 {
 class StringListAppender2[E] extends AppenderBase[E] {
   import StringListAppender2._
 
-  @BeanProperty var layout: Layout[E] = _
+  @BeanProperty
+  var layout: Layout[E] = _
 
   override def start() {
-    Option(layout).filter(_.isStarted).foreach(_ => super.start())
+    Option(layout).filter(_.isStarted).foreach(_ ⇒ super.start())
   }
 
   def append(p1: E) {
@@ -56,12 +57,13 @@ class StringListAppender2[E] extends AppenderBase[E] {
     latch foreach { _.open() }
   }
 }
-class LogstashRedisLayoutSpec extends Specification { def is =
+class LogstashRedisLayoutSpec extends Specification {
+  def is =
 
-  sequential ^
-  "A logstash layout should" ^
-    "render a regular log statement" ! withLogger("redis-logger-1").renderNormalLog ^
-    "render a log statement with an exception" ! withLogger("redis-logger-2").renderExceptionLog ^ end
+    sequential ^
+      "A logstash layout should" ^
+      "render a regular log statement" ! withLogger("redis-logger-1").renderNormalLog ^
+      "render a log statement with an exception" ! withLogger("redis-logger-2").renderExceptionLog ^ end
 
 }
 
@@ -72,7 +74,7 @@ case class withLogger(loggerName: String) extends MustMatchers {
   var logger: Logger = _
   val latch = new StandardLatch
 
-  def around(t: => Result): Result = {
+  def around(t: ⇒ Result): Result = {
     loggerContext = new LoggerContext
     val configUrl = getClass.getClassLoader.getResource("redis-layout-spec.xml")
     StringListAppender2.messages.clear
@@ -103,7 +105,7 @@ case class withLogger(loggerName: String) extends MustMatchers {
   def renderExceptionLog = around {
     val ms = "this is a message for an error"
     try { throw new RuntimeException("the exception message") }
-    catch { case e => logger.error(ms, e) }
+    catch { case e ⇒ logger.error(ms, e) }
     (latch.tryAwait(2, TimeUnit.SECONDS) must beTrue) and {
       val js = JsonParser.parse(StringListAppender2.messages.head)
       val msgMatch = (js \ "@message").extract[String] must_== ms
@@ -116,5 +118,4 @@ case class withLogger(loggerName: String) extends MustMatchers {
     }
   }
 }
-
 

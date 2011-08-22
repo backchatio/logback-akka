@@ -77,8 +77,8 @@ object Hoptoad {
   }
 
   case class Request(url: String, component: String,
-    params: List[Var] = Nil, sessions: List[Var] = Nil,
-    cgi_data: List[Var] = Nil) {
+                     params: List[Var] = Nil, sessions: List[Var] = Nil,
+                     cgi_data: List[Var] = Nil) {
 
     def paramsXml = <params>{ params.map(_.toXml) }</params>
     def sessionsXml = <sessions>{ sessions.map(_.toXml) }</sessions>
@@ -135,7 +135,7 @@ object Hoptoad {
   }
 
   case class HoptoadNotice(
-    config: HoptoadConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
+      config: HoptoadConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
 
     def toXml =
       <notice version="2.0">

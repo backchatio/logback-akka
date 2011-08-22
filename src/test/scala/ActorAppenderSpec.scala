@@ -20,17 +20,17 @@
 package mojolly.logback
 
 import org.specs2.Specification
-import ch.qos.logback.classic.{LoggerContext}
+import ch.qos.logback.classic.{ LoggerContext }
 import ch.qos.logback.classic.joran.JoranConfigurator
 import collection.mutable.ListBuffer
 import reflect.BeanProperty
-import ch.qos.logback.core.{Layout, AppenderBase}
+import ch.qos.logback.core.{ Layout, AppenderBase }
 import ch.qos.logback.core.util.StatusPrinter
 import org.multiverse.api.latches.StandardLatch
 import ch.qos.logback.classic.spi.ILoggingEvent
-import java.util.concurrent.{TimeUnit, ConcurrentSkipListSet}
-import akka.actor.{ActorRef, Actor}
-import org.specs2.specification.{Before, Around}
+import java.util.concurrent.{ TimeUnit, ConcurrentSkipListSet }
+import akka.actor.{ ActorRef, Actor }
+import org.specs2.specification.{ Before, Around }
 import java.lang.StringBuffer
 
 object StringListAppender {
@@ -40,10 +40,11 @@ object StringListAppender {
 class StringListAppender[E] extends AppenderBase[E] {
   import StringListAppender._
 
-  @BeanProperty var layout: Layout[E] = _
+  @BeanProperty
+  var layout: Layout[E] = _
 
   override def start() {
-    Option(layout).filter(_.isStarted).foreach(_ => super.start())
+    Option(layout).filter(_.isStarted).foreach(_ ⇒ super.start())
   }
 
   def append(p1: E) {
@@ -51,12 +52,13 @@ class StringListAppender[E] extends AppenderBase[E] {
     latch foreach { _.open() }
   }
 }
-class ActorAppenderSpec extends Specification { def is =
+class ActorAppenderSpec extends Specification {
+  def is =
 
-  sequential ^
-  "An actor appender for logback should" ^
-    "log to the child appender" ! withStringListAppender(logToChildAppenders) ^
-    "log to a listener actor" ! logToListenerActor ^ end
+    sequential ^
+      "An actor appender for logback should" ^
+      "log to the child appender" ! withStringListAppender(logToChildAppenders) ^
+      "log to a listener actor" ! logToListenerActor ^ end
 
   def logToListenerActor = {
     StringListAppender.messages = ListBuffer[String]()
@@ -71,8 +73,8 @@ class ActorAppenderSpec extends Specification { def is =
     val latch = new StandardLatch()
     val actor = Actor.actorOf(new Actor {
       def receive = {
-        case evt: ILoggingEvent if evt.getMessage == "The logged message" => latch.open()
-        case _: ILoggingEvent => 
+        case evt: ILoggingEvent if evt.getMessage == "The logged message" ⇒ latch.open()
+        case _: ILoggingEvent ⇒
       }
     }).start()
 
@@ -91,10 +93,8 @@ class ActorAppenderSpec extends Specification { def is =
     logger.info("the logged message")
     val res = latch.tryAwait(2, TimeUnit.SECONDS) must beTrue
     withStringListAppender.stopActor
-    res and  (StringListAppender.messages must contain("the logged message"))
+    res and (StringListAppender.messages must contain("the logged message"))
   }
-
-
 
   object withStringListAppender extends Before {
     val loggerContext = new LoggerContext
@@ -106,8 +106,8 @@ class ActorAppenderSpec extends Specification { def is =
       val latch = new StandardLatch
       actor = Actor.actorOf(new Actor {
         protected def receive = {
-          case 'Start => latch.open()
-          case _ =>
+          case 'Start ⇒ latch.open()
+          case _      ⇒
         }
       }).start()
       LogbackActor.addListener(actor)

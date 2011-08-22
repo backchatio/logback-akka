@@ -36,12 +36,12 @@ object LogbackActor extends ListenerManagement {
   def readEnvironmentKey(onFail: String ⇒ Unit = _ ⇒ null) = {
     val envConf = System.getenv("AKKA_MODE") match {
       case null | "" ⇒ None
-      case value ⇒ Some(value)
+      case value     ⇒ Some(value)
     }
 
     val systemConf = System.getProperty("akka.mode") match {
       case null | "" ⇒ None
-      case value ⇒ Some(value)
+      case value     ⇒ Some(value)
     }
     (envConf orElse systemConf) getOrElse {
       onFail("no environment found, defaulting to development")

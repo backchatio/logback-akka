@@ -38,3 +38,5 @@ lib_managed
 target
 dist
 /nbproject/private/*.sublime-project
+.ensime_port
+*.sublime-project

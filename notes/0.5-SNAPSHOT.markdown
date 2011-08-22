@@ -1,0 +1,4 @@
+## Logback Akka
+* Upgrades to Akka 1.2-RC3
+* Adds scalariform plugin as project dependency
+
