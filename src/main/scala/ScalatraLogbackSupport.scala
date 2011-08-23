@@ -25,14 +25,15 @@ import util.DynamicVariable
 import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
+import collection.JavaConversions._
 
 trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel ⇒
 
   protected val _cgiParams = new DynamicVariable[Map[String, String]](Map.empty)
 
   abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
-    val realMultiParams = req.getParameterMap.asInstanceOf[java.util.Map[String,Array[String]]].toMap
-      .transform { (k, v) => v: Seq[String] }
+    val realMultiParams = req.getParameterMap.asInstanceOf[java.util.Map[String, Array[String]]].toMap
+      .transform { (k, v) ⇒ v: Seq[String] }
     _request.withValue(req) {
       _response.withValue(res) {
         _multiParams.withValue(Map() ++ realMultiParams) {
