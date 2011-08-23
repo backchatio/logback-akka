@@ -31,12 +31,16 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
   protected val _cgiParams = new DynamicVariable[Map[String, String]](Map.empty)
 
   abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
+    val realMultiParams = req.getParameterMap.asInstanceOf[java.util.Map[String,Array[String]]].toMap
+      .transform { (k, v) => v: Seq[String] }
     _request.withValue(req) {
       _response.withValue(res) {
-        _cgiParams.withValue(readCgiParams) {
-          fillMdc()
-          super.handle(req, res)
-          MDC.clear()
+        _multiParams.withValue(Map() ++ realMultiParams) {
+          _cgiParams.withValue(readCgiParams) {
+            fillMdc()
+            super.handle(req, res)
+            MDC.clear()
+          }
         }
       }
     }

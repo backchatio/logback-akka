@@ -1,4 +1,5 @@
 ## Logback Akka
 * Upgrades to Akka 1.2-RC3
 * Adds scalariform plugin as project dependency
+* Fixes issue where the multiparams aren't filled yet in scalatra
 
