@@ -32,12 +32,12 @@ import ch.qos.logback.core.{ UnsynchronizedAppenderBase, LayoutBase }
 import java.io.File
 import java.net.URLDecoder
 import collection.JavaConverters._
-import mojolly.logback.Hoptoad.{ Throttle, HoptoadConfig }
+import mojolly.logback.Airbrake.{ Throttle, AirbrakeConfig }
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.classic.filter.ThresholdFilter
 import org.scala_tools.time.Imports._
 
-object Hoptoad {
+object Airbrake {
 
   val REQUEST_PATH = "REQUEST_PATH"
   val REQUEST_APP = "REQUEST_APP" // maps to a scalatra servlet
@@ -93,7 +93,7 @@ object Hoptoad {
         { if (cgi_data.length > 0) cgiDataXml }
       </request>
   }
-  case class HoptoadConfig(
+  case class AirbrakeConfig(
     applicationName: String,
     applicationVersion: String,
     applicationUrl: String,
@@ -104,12 +104,12 @@ object Hoptoad {
     environmentName: String,
     projectRoot: Option[String] = None)
 
-  object HoptoadNotice {
+  object AirbrakeNotice {
 
-    def apply(config: HoptoadConfig, evt: ILoggingEvent) = {
+    def apply(config: AirbrakeConfig, evt: ILoggingEvent) = {
       val backtrace = readBacktraces(evt)
       val request = readRequest(config, evt)
-      new HoptoadNotice(
+      new AirbrakeNotice(
         config,
         evt.getLoggerName,
         evt.getMessage + "\n" + evt.getThrowableProxy.getMessage,
@@ -117,7 +117,7 @@ object Hoptoad {
         request)
     }
 
-    private def readRequest(config: HoptoadConfig, evt: ILoggingEvent): Option[Request] = {
+    private def readRequest(config: AirbrakeConfig, evt: ILoggingEvent): Option[Request] = {
       val mdc = evt.getMdc.asScala
       mdc.get(REQUEST_PATH) map { path ⇒
         Request(
@@ -134,8 +134,8 @@ object Hoptoad {
     }
   }
 
-  case class HoptoadNotice(
-      config: HoptoadConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
+  case class AirbrakeNotice(
+      config: AirbrakeConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
 
     def toXml =
       <notice version="2.0">
@@ -180,26 +180,26 @@ object Hoptoad {
   }
 
 }
-class HoptoadLayout[E] extends LayoutBase[E] {
+class AirbrakeNotice[E] extends LayoutBase[E] {
 
-  var config: HoptoadConfig = _
+  var config: AirbrakeConfig = _
   def doLayout(p1: E) = {
-    Hoptoad.HoptoadNotice(config, p1.asInstanceOf[ILoggingEvent]).toXml.toString
+    Airbrake.AirbrakeNotice(config, p1.asInstanceOf[ILoggingEvent]).toXml.toString
   }
 }
 
-class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
+class AirbrakeAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   @BeanProperty
   var apiKey: String = null
   @BeanProperty
   var useSsl: Boolean = false
   @BeanProperty
-  var userAgent: String = "HoptoadClient/1.0 (compatible; Mozilla/5.0; AsyncHttpClient +http://mojolly.com)"
+  var userAgent: String = "AirbrakeClient/1.0 (compatible; Mozilla/5.0; AsyncHttpClient +http://mojolly.com)"
   @BeanProperty
   var socketTimeout: Int = 1.minute.millis.toInt
   @BeanProperty
-  var applicationName = "Mojolly Hoptoad Notifier"
+  var applicationName = "Mojolly Airbrake Notifier"
   @BeanProperty
   var applicationVersion = {
     val implVersion = getClass.getPackage.getImplementationVersion
@@ -214,7 +214,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
   addFilter(filter)
 
   var environmentName: String = null
-  var layout: HoptoadLayout[E] = null
+  var layout: AirbrakeNotice[E] = null
   private var _projectRoot: Option[String] = None
 
   private val httpConfig = new AsyncHttpClientConfig.Builder()
@@ -228,7 +228,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   private lazy val http = new AsyncHttpClient(httpConfig)
 
-  val hoptoadUrl = "http%s://hoptoadapp.com/notifier_api/v2/notices" format (if (useSsl) "s" else "")
+  val airbrakeUrl = "http%s://hoptoadapp.com/notifier_api/v2/notices" format (if (useSsl) "s" else "")
 
   override def stop() {
     super.stop()
@@ -240,8 +240,8 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
 
   override def start() {
     if (apiKey == null || apiKey.trim.isEmpty) {
-      addError("You have to provide an api key for hoptoad in the config")
-      throw new RuntimeException("Missing Hoptoad API key in logback config.")
+      addError("You have to provide an api key for airbrake in the config")
+      throw new RuntimeException("Missing Airbrake API key in logback config.")
     }
     if (!filter.isStarted) filter.start()
     _projectRoot = {
@@ -251,7 +251,7 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
       } else Some(pr)
     }
     initEnvironment
-    layout = new HoptoadLayout[E]
+    layout = new AirbrakeNotice[E]
     super.start()
   }
 
@@ -270,10 +270,10 @@ class HoptoadAppender[E] extends UnsynchronizedAppenderBase[E] {
   private def projectRoot: Option[String] = _projectRoot
 
   def append(p1: E) {
-    layout.config = HoptoadConfig(
+    layout.config = AirbrakeConfig(
       applicationName, applicationVersion, applicationName, apiKey,
       useSsl, userAgent, socketTimeout, environmentName, projectRoot)
-    http.preparePost(hoptoadUrl).addHeader("Content-Type", "text/xml").setBody(layout.doLayout(p1)).execute
+    http.preparePost(airbrakeUrl).addHeader("Content-Type", "text/xml").setBody(layout.doLayout(p1)).execute
   }
 
   protected def throttleHttp = {

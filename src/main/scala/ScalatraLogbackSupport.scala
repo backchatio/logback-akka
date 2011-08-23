@@ -48,13 +48,13 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
   }
 
   protected def fillMdc() {
-    MDC.put(Hoptoad.REQUEST_PATH, requestPath)
-    MDC.put(Hoptoad.REQUEST_APP, getClass.getSimpleName)
-    MDC.put(Hoptoad.REQUEST_PARAMS, multiParams flatMap {
+    MDC.put(Airbrake.REQUEST_PATH, requestPath)
+    MDC.put(Airbrake.REQUEST_APP, getClass.getSimpleName)
+    MDC.put(Airbrake.REQUEST_PARAMS, multiParams flatMap {
       case (k, vl) ⇒ vl.map(v ⇒ "%s=%s".format(%-(k), %-(v)))
     } mkString "&")
-    MDC.put(Hoptoad.SESSION_PARAMS, session map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v.toString)) } mkString "&")
-    MDC.put(Hoptoad.CGI_PARAMS, cgiParams map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v)) } mkString "&")
+    MDC.put(Airbrake.SESSION_PARAMS, session map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v.toString)) } mkString "&")
+    MDC.put(Airbrake.CGI_PARAMS, cgiParams map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v)) } mkString "&")
   }
 
   def cgiParams = _cgiParams.value
