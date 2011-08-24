@@ -20,61 +20,65 @@
 package mojolly.logback
 
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
-import org.scalatra.{ ScalatraKernel, Handler }
+import org.scalatra.{ ScalatraKernel, Handler, MatchedRoute }
 import util.DynamicVariable
 import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
 import collection.JavaConversions._
 
+object ScalatraLogbackSupport {
+
+  val CgiParamsKey = "com.mojolly.logback.ScalatraLogbackSupport"
+}
+
 trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel ⇒
 
-  protected val _cgiParams = new DynamicVariable[Map[String, String]](Map.empty)
+  import ScalatraLogbackSupport.CgiParamsKey
 
   abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
-    val realMultiParams = req.getParameterMap.asInstanceOf[java.util.Map[String, Array[String]]].toMap
-      .transform { (k, v) ⇒ v: Seq[String] }
     _request.withValue(req) {
-      _response.withValue(res) {
-        _multiParams.withValue(Map() ++ realMultiParams) {
-          _cgiParams.withValue(readCgiParams) {
-            fillMdc()
-            super.handle(req, res)
-            MDC.clear()
-          }
-        }
-      }
+      req(CgiParamsKey) = readCgiParams(req)
+      fillMdc()
+      super.handle(req, res)
+      MDC.clear()
     }
   }
 
-  protected def fillMdc() {
-    MDC.put(Airbrake.REQUEST_PATH, requestPath)
-    MDC.put(Airbrake.REQUEST_APP, getClass.getSimpleName)
-    MDC.put(Airbrake.REQUEST_PARAMS, multiParams flatMap {
-      case (k, vl) ⇒ vl.map(v ⇒ "%s=%s".format(%-(k), %-(v)))
-    } mkString "&")
-    MDC.put(Airbrake.SESSION_PARAMS, session map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v.toString)) } mkString "&")
-    MDC.put(Airbrake.CGI_PARAMS, cgiParams map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v)) } mkString "&")
+  override protected def withRouteMultiParams[S](matchedRoute: Option[MatchedRoute])(thunk: ⇒ S): S = {
+    val originalParams = multiParams
+    request(ScalatraKernel.MultiParamsKey) = originalParams ++ matchedRoute.map(_.multiParams).getOrElse(Map.empty)
+    fillMdc()
+    try { thunk } finally { request(ScalatraKernel.MultiParamsKey) = originalParams }
   }
 
-  def cgiParams = _cgiParams.value
+  protected def fillMdc() { // Do this twice so that we get all the route params if they are available and applicable
+    MDC.clear()
+    MDC.put(Airbrake.REQUEST_PATH, requestPath)
+    MDC.put(Airbrake.REQUEST_APP, getClass.getSimpleName)
+    MDC.put(Airbrake.REQUEST_PARAMS, multiParams transform { (k, vl) ⇒ vl.map(v ⇒ "%s=%s".format(%-(k), %-(v))) } mkString "&")
+    MDC.put(Airbrake.SESSION_PARAMS, session transform { (k, v) ⇒ "%s=%s".format(%-(k), %-(v.toString)) } mkString "&")
+    MDC.put(Airbrake.CGI_PARAMS, cgiParams transform { (k, v) ⇒ "%s=%s".format(%-(k), %-(v)) } mkString "&")
+  }
 
-  private def readCgiParams = Map(
-    "AUTH_TYPE" -> request.getAuthType,
-    "CONTENT_LENGTH" -> request.getContentLength.toString,
-    "CONTENT_TYPE" -> request.getContentType,
+  def cgiParams = request get CgiParamsKey map (_.asInstanceOf[Map[String, String]]) getOrElse Map.empty
+
+  private def readCgiParams(req: HttpServletRequest) = Map(
+    "AUTH_TYPE" -> req.getAuthType,
+    "CONTENT_LENGTH" -> req.getContentLength.toString,
+    "CONTENT_TYPE" -> req.getContentType,
     "DOCUMENT_ROOT" -> servletContext.getRealPath(servletContext.getContextPath),
-    "PATH_INFO" -> request.getPathInfo,
-    "PATH_TRANSLATED" -> request.getPathTranslated,
-    "QUERY_STRING" -> request.getQueryString,
-    "REMOTE_ADDR" -> request.getRemoteAddr,
-    "REMOTE_HOST" -> request.getRemoteHost,
-    "REMOTE_USER" -> request.getRemoteUser,
-    "REQUEST_METHOD" -> request.getMethod,
-    "SCRIPT_NAME" -> request.getServletPath,
-    "SERVER_NAME" -> request.getServerName,
-    "SERVER_PORT" -> request.getServerPort.toString,
-    "SERVER_PROTOCOL" -> request.getProtocol,
+    "PATH_INFO" -> req.getPathInfo,
+    "PATH_TRANSLATED" -> req.getPathTranslated,
+    "QUERY_STRING" -> req.getQueryString,
+    "REMOTE_ADDR" -> req.getRemoteAddr,
+    "REMOTE_HOST" -> req.getRemoteHost,
+    "REMOTE_USER" -> req.getRemoteUser,
+    "REQUEST_METHOD" -> req.getMethod,
+    "SCRIPT_NAME" -> req.getServletPath,
+    "SERVER_NAME" -> req.getServerName,
+    "SERVER_PORT" -> req.getServerPort.toString,
+    "SERVER_PROTOCOL" -> req.getProtocol,
     "SERVER_SOFTWARE" -> servletContext.getServerInfo)
 
   private def %-(s: String) = if (s == null || s.trim.isEmpty) "" else URLEncoder.encode(s, "UTF-8")
