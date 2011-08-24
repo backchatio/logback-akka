@@ -3,4 +3,5 @@
 * Adds scalariform plugin as project dependency
 * Fixes issue where the multiparams aren't filled yet in scalatra
 * Renames the Hoptoad appender to Airbrake appender their name changed.
+* Updates to work with the latest snapshot of scalatra
 

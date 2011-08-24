@@ -21,12 +21,14 @@ package mojolly.logback
 
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import org.scalatra.{ ScalatraKernel, Handler, MatchedRoute }
+import ScalatraKernel.MultiParamsKey
+import org.scalatra.util.MultiMap
 import util.DynamicVariable
 import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
 import collection.JavaConversions._
-
+import java.util.{ Map ⇒ JMap }
 object ScalatraLogbackSupport {
 
   val CgiParamsKey = "com.mojolly.logback.ScalatraLogbackSupport"
@@ -37,8 +39,10 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
   import ScalatraLogbackSupport.CgiParamsKey
 
   abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
+    val realMultiParams = req.getParameterMap.asInstanceOf[JMap[String, Array[String]]].toMap transform { (k, v) ⇒ v: Seq[String] }
     _request.withValue(req) {
-      req(CgiParamsKey) = readCgiParams(req)
+      request(MultiParamsKey) = MultiMap(Map() ++ realMultiParams)
+      request(CgiParamsKey) = readCgiParams(req)
       fillMdc()
       super.handle(req, res)
       MDC.clear()

@@ -29,7 +29,7 @@ object ShellPrompt {
 object LogbackAkkaSettings {
   val buildOrganization = "com.mojolly.logback"
   val buildScalaVersion = "2.9.0-1"
-  val buildVersion      = "0.5-SNAPSHOT"
+  val buildVersion      = "0.6-SNAPSHOT"
 
   lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
     formatPreferences in Compile := formattingPreferences,
