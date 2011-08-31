@@ -1,6 +1,6 @@
 import sbt._
 import Keys._
-import ScalariformPlugin.formatPreferences
+import ScalariformPlugin._
 
 // Shell prompt which show the current project, git branch and build version
 // git magic from Daniel Sobral, adapted by Ivan Porto Carrero to also work with git flow branches
@@ -75,18 +75,19 @@ object LogbackAkkaSettings {
         "Akka Repo" at "http://akka.io/repository"
       ),
       retrieveManaged := true,
+      (defaultExcludes in formatSources) <<= (defaultExcludes) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
         "net.liftweb" % "lift-json_2.9.0-1" % "2.4-M3",
         "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
         "com.ning" % "async-http-client" % "1.6.4",
-        "org.scala-tools.time" % "time_2.9.0-1" % "0.4",
+        "org.scala-tools.time" %% "time" % "0.5",
         "se.scalablesolutions.akka" % "akka-stm" % "1.2-RC3",
         "org.slf4j" % "slf4j-api" % "1.6.1",
         "com.weiglewilczek.slf4s" % "slf4s_2.9.0-1" % "1.0.6",
         "ch.qos.logback" % "logback-classic" % "0.9.29",
         "redis.clients" % "jedis" % "1.5.2" % "provided",
-        "org.specs2" % "specs2_2.9.1.RC4" % "1.5" % "test"
+        "org.specs2" %% "specs2" % "1.6-SNAPSHOT" % "test"
       ),
       libraryDependencies ++= compilerPlugins,
       autoCompilerPlugins := true,
