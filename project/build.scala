@@ -50,7 +50,7 @@ object LogbackAkkaSettings {
   val description = SettingKey[String]("description")
 
   val compilerPlugins = Seq(
-    compilerPlugin("org.scala-lang.plugins" % "continuations" % buildVersion),
+    compilerPlugin("org.scala-lang.plugins" % "continuations" % buildScalaVersion),
     compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
   )
 
