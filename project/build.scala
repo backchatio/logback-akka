@@ -50,7 +50,7 @@ object LogbackAkkaSettings {
   val description = SettingKey[String]("description")
 
   val compilerPlugins = Seq(
-    compilerPlugin("org.scala-lang.plugins" % "continuations" % "2.9.1"),
+    compilerPlugin("org.scala-lang.plugins" % "continuations" % buildVersion),
     compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
   )
 
@@ -84,11 +84,12 @@ object LogbackAkkaSettings {
         "org.scala-tools.time" %% "time" % "0.5",
         "se.scalablesolutions.akka" % "akka-stm" % "1.2-RC3",
         "org.slf4j" % "slf4j-api" % "1.6.1",
-        "com.weiglewilczek.slf4s" % "slf4s_2.9.0-1" % "1.0.6",
+        "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "0.9.29",
         "redis.clients" % "jedis" % "1.5.2" % "provided",
         "org.specs2" %% "specs2" % "1.6-SNAPSHOT" % "test"
       ),
+      crossScalaVersions := Seq("2.9.1", "2.9.0-1"),
       libraryDependencies ++= compilerPlugins,
       autoCompilerPlugins := true,
       parallelExecution in Test := false,
