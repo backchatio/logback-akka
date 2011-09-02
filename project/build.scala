@@ -87,7 +87,7 @@ object LogbackAkkaSettings {
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "0.9.29",
         "redis.clients" % "jedis" % "1.5.2" % "provided",
-        "org.specs2" %% "specs2" % "1.6-SNAPSHOT" % "test"
+        "org.specs2" %% "specs2" % "1.5" % "test"
       ),
       crossScalaVersions := Seq("2.9.1", "2.9.0-1"),
       libraryDependencies ++= compilerPlugins,
