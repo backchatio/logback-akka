@@ -82,7 +82,7 @@ object LogbackAkkaSettings {
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
         "com.ning" % "async-http-client" % "1.6.4",
         "org.scala-tools.time" %% "time" % "0.5",
-        "se.scalablesolutions.akka" % "akka-stm" % "1.2-RC3",
+        "se.scalablesolutions.akka" % "akka-stm" % "1.2-RC6",
         "org.slf4j" % "slf4j-api" % "1.6.1",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "0.9.29",
