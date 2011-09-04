@@ -28,9 +28,8 @@ import collection.JavaConversions._
 import collection.mutable
 import collection.JavaConverters._
 import ch.qos.logback.classic.spi.{ ILoggingEvent }
-import net.liftweb.json.JsonAST._
+import net.liftweb.json._
 import net.liftweb.json.JsonDSL._
-import net.liftweb.json.{ DefaultFormats, Extraction, Printer, JsonParser }
 import ch.qos.logback.core.{ Layout, LayoutBase, UnsynchronizedAppenderBase }
 import org.scala_tools.time.Imports._
 import org.joda.time.format.{ ISODateTimeFormat }
@@ -69,7 +68,8 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
 
       Printer.compact {
         render {
-          jv merge ("@fields" -> fields)
+          val flds: JValue = ("@fields" -> fields)
+          jv merge flds
         }
       }
     } catch {
