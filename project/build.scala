@@ -77,7 +77,6 @@ object LogbackAkkaSettings {
       retrieveManaged := true,
       (defaultExcludes in formatSources) <<= (defaultExcludes) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
-        "net.liftweb" %% "lift-json" % "2.4-SNAPSHOT",
         "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
         "com.ning" % "async-http-client" % "1.6.4",
@@ -86,9 +85,16 @@ object LogbackAkkaSettings {
         "org.slf4j" % "slf4j-api" % "1.6.1",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "0.9.29",
-        "redis.clients" % "jedis" % "1.5.2" % "provided",
-        "org.specs2" %% "specs2" % "1.6" % "test"
+        "redis.clients" % "jedis" % "1.5.2" % "provided"
       ),
+      libraryDependencies <+= (scalaVersion) {
+        case "2.9.0-1" => "org.specs2" %% "specs2" % "1.5" % "test"
+        case _ => "org.specs2" %% "specs2" % "1.6" % "test"
+      },
+      libraryDependencies <+= (scalaVersion) {
+        case "2.9.0-1" => "net.liftweb" %% "lift-json" % "2.4-M3"
+        case _ => "net.liftweb" %% "lift-json" % "2.4-SNAPSHOT"
+      },
       crossScalaVersions := Seq("2.9.1", "2.9.0-1"),
       libraryDependencies ++= compilerPlugins,
       autoCompilerPlugins := true,
