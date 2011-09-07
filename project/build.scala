@@ -74,7 +74,7 @@ object LogbackAkkaSettings {
         "ScalaTools Snapshots" at "http://scala-tools.org/repo-snapshots",
         "Akka Repo" at "http://akka.io/repository"
       ),
-      retrieveManaged := true,
+      //retrieveManaged := true,
       (defaultExcludes in formatSources) <<= (defaultExcludes) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % "2.0.0-SNAPSHOT" % "provided",
@@ -93,7 +93,7 @@ object LogbackAkkaSettings {
       },
       libraryDependencies <+= (scalaVersion) {
         case "2.9.0-1" => "net.liftweb" %% "lift-json" % "2.4-M3"
-        case _ => "net.liftweb" %% "lift-json" % "2.4-SNAPSHOT"
+        case "2.9.1" => "net.liftweb" %% "lift-json" % "2.4-M4"
       },
       crossScalaVersions := Seq("2.9.1", "2.9.0-1"),
       libraryDependencies ++= compilerPlugins,
