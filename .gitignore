@@ -40,3 +40,4 @@ dist
 /nbproject/private/*.sublime-project
 .ensime_port
 *.sublime-project
+logback-akka.sublime-workspace
