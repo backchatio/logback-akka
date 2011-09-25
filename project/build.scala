@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import com.typesafe.sbtscalariform._
 import ScalariformPlugin._
 
 // Shell prompt which show the current project, git branch and build version
@@ -75,7 +76,7 @@ object LogbackAkkaSettings {
         "Akka Repo" at "http://akka.io/repository"
       ),
       //retrieveManaged := true,
-      (defaultExcludes in formatSources) <<= (defaultExcludes) (_ || "*Spec.scala"),
+      (excludeFilter in formatSources) <<= (excludeFilter) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % "2.0.1" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
