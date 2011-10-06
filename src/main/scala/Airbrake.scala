@@ -27,72 +27,52 @@ import com.ning.http.client._
 import akka.config.Config
 import ch.qos.logback.classic.spi.ILoggingEvent
 import reflect.BeanProperty
-import java.util.concurrent.atomic.AtomicBoolean
 import ch.qos.logback.core.{ UnsynchronizedAppenderBase, LayoutBase }
 import java.io.File
-import java.net.URLDecoder
 import collection.JavaConverters._
-import mojolly.logback.Airbrake.{ Throttle, AirbrakeConfig }
 import ch.qos.logback.core.filter.Filter
 import ch.qos.logback.classic.filter.ThresholdFilter
 import org.scala_tools.time.Imports._
+import mojolly.logback.Airbrake.{ Throttle, AirbrakeConfig }
 
 object Airbrake {
 
-  val REQUEST_PATH = "REQUEST_PATH"
-  val REQUEST_APP = "REQUEST_APP" // maps to a scalatra servlet
-  val REQUEST_PARAMS = "REQUEST_PARAMS"
-  val SESSION_PARAMS = "SESSION_PARAMS"
-  val CGI_PARAMS = "CGI_PARAMS"
-
-  case class Backtrace(file: String, number: Int, methodName: String) {
-    def toXml = <line method={ methodName } file={ file } number={ number.toString }></line>
+  class RichVar(v: RequestSupport.Var) {
+    def toXml = <val key={ v.key }>{ v.value }</val>
   }
 
-  object Var {
-    def apply(pairs: String): List[Var] = {
-      if (pairs == null || pairs.trim.isEmpty) Nil
-      else {
-        val mapped = if (pairs.indexOf('&') > -1) {
-          pairs.split('&').foldRight(Map.empty[String, List[String]]) { readQsPair _ }
-        } else {
-          readQsPair(pairs)
-        }
-        mapped map { case (k, v) ⇒ Var(k, v.mkString(", ")) } toList
-      }
-    }
+  implicit def richVar(v: RequestSupport.Var) = new RichVar(v)
 
-    private def readQsPair(pair: String, current: Map[String, List[String]] = Map.empty) = {
-      (pair split '=' toList) map { s ⇒ if (s != null && !s.trim.isEmpty) URLDecoder.decode(s, "UTF-8") else "" } match {
-        case item :: Nil ⇒ current + (item -> List[String]())
-        case item :: rest ⇒
-          if (!current.contains(item)) current + (item -> rest) else (current + (item -> (rest ::: current(item)).distinct))
-        case _ ⇒ current
-      }
-    }
-  }
-
-  case class Var(key: String, value: String) {
-    def toXml = <val key={ key }>{ value }</val>
-  }
-
-  case class Request(url: String, component: String,
-                     params: List[Var] = Nil, sessions: List[Var] = Nil,
-                     cgi_data: List[Var] = Nil) {
-
-    def paramsXml = <params>{ params.map(_.toXml) }</params>
-    def sessionsXml = <sessions>{ sessions.map(_.toXml) }</sessions>
-    def cgiDataXml = <cgi-data>{ cgi_data.map(_.toXml) }</cgi-data>
+  class RichRequest(r: RequestSupport.Request) {
+    def paramsXml = <params>{ r.params.map(_.toXml) }</params>
+    def sessionsXml = <sessions>{ r.sessions.map(_.toXml) }</sessions>
+    def cgiDataXml = <cgi-data>{ r.cgi_data.map(_.toXml) }</cgi-data>
 
     def toXml =
       <request>
-        <url>{ url }</url>
-        <component>{ component }</component>
-        { if (params.length > 0) paramsXml }
-        { if (sessions.length > 0) sessionsXml }
-        { if (cgi_data.length > 0) cgiDataXml }
+        <url>{ r.url }</url>
+        <component>{ r.component }</component>
+        { if (r.params.length > 0) paramsXml }
+        { if (r.sessions.length > 0) sessionsXml }
+        { if (r.cgi_data.length > 0) cgiDataXml }
       </request>
   }
+
+  implicit def richRequest(r: RequestSupport.Request) = new RichRequest(r)
+
+  class RichBacktrace(b: BacktraceSupport.Backtrace) {
+    def toXml = <line method={ b.methodName } file={ b.file } number={ b.number.toString }></line>
+  }
+
+  implicit def richBacktrace(r: BacktraceSupport.Backtrace) = new RichBacktrace(r)
+
+  class MojollyDuration(duration: Duration) {
+    def doubled = (duration.millis * 2).toDuration
+    def max(upperBound: Duration) = if (duration > upperBound) upperBound else duration
+  }
+
+  implicit def duration2mojollyDuration(dur: Duration) = new MojollyDuration(dur)
+
   case class AirbrakeConfig(
     applicationName: String,
     applicationVersion: String,
@@ -107,8 +87,8 @@ object Airbrake {
   object AirbrakeNotice {
 
     def apply(config: AirbrakeConfig, evt: ILoggingEvent) = {
-      val backtrace = readBacktraces(evt)
-      val request = readRequest(config, evt)
+      val backtrace = BacktraceSupport.Backtraces(evt)
+      val request = RequestSupport.Request(config.applicationName, evt)
       new AirbrakeNotice(
         config,
         evt.getLoggerName,
@@ -116,26 +96,10 @@ object Airbrake {
         backtrace,
         request)
     }
-
-    private def readRequest(config: AirbrakeConfig, evt: ILoggingEvent): Option[Request] = {
-      val mdc = evt.getMdc.asScala
-      mdc.get(REQUEST_PATH) map { path ⇒
-        Request(
-          path,
-          mdc.get(REQUEST_APP) getOrElse config.applicationName,
-          Var(mdc.get(REQUEST_PARAMS).orNull),
-          Var(mdc.get(SESSION_PARAMS).orNull),
-          Var(mdc.get(CGI_PARAMS).orNull))
-      }
-    }
-
-    private def readBacktraces(evt: ILoggingEvent) = {
-      evt.getCallerData map { stl ⇒ Backtrace(stl.getFileName, stl.getLineNumber, stl.getMethodName) }
-    }
   }
 
   case class AirbrakeNotice(
-      config: AirbrakeConfig, clazz: String, message: String, backtraces: Seq[Backtrace], request: Option[Request] = None) {
+      config: AirbrakeConfig, clazz: String, message: String, backtraces: Seq[BacktraceSupport.Backtrace], request: Option[RequestSupport.Request] = None) {
 
     def toXml =
       <notice version="2.0">
@@ -159,13 +123,6 @@ object Airbrake {
 
   }
 
-  class MojollyDuration(duration: Duration) {
-    def doubled = (duration.millis * 2).toDuration
-    def max(upperBound: Duration) = if (duration > upperBound) upperBound else duration
-  }
-
-  implicit def duration2mojollyDuration(dur: Duration) = new MojollyDuration(dur)
-
   /**
    * Throttle
    *
@@ -180,8 +137,8 @@ object Airbrake {
   }
 
 }
-class AirbrakeNotice[E] extends LayoutBase[E] {
 
+class AirbrakeNotice[E] extends LayoutBase[E] {
   var config: AirbrakeConfig = _
   def doLayout(p1: E) = {
     Airbrake.AirbrakeNotice(config, p1.asInstanceOf[ILoggingEvent]).toXml.toString
@@ -189,7 +146,6 @@ class AirbrakeNotice[E] extends LayoutBase[E] {
 }
 
 class AirbrakeAppender[E] extends UnsynchronizedAppenderBase[E] {
-
   @BeanProperty
   var apiKey: String = null
   @BeanProperty
