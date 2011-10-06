@@ -60,9 +60,9 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
     MDC.clear()
     MDC.put(RequestSupport.REQUEST_PATH, requestPath)
     MDC.put(RequestSupport.REQUEST_APP, getClass.getSimpleName)
-    MDC.put(RequestSupport.REQUEST_PARAMS, multiParams transform { (k, vl) ⇒ vl.map(v ⇒ "%s=%s".format(%-(k), %-(v))) } mkString "&")
-    MDC.put(RequestSupport.SESSION_PARAMS, session transform { (k, v) ⇒ "%s=%s".format(%-(k), %-(v.toString)) } mkString "&")
-    MDC.put(RequestSupport.CGI_PARAMS, cgiParams transform { (k, v) ⇒ "%s=%s".format(%-(k), %-(v)) } mkString "&")
+    MDC.put(RequestSupport.REQUEST_PARAMS, multiParams map { case (k, vl) ⇒ vl.map(v ⇒ "%s=%s".format(%-(k), %-(v))) } mkString "&")
+    MDC.put(RequestSupport.SESSION_PARAMS, session map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v.toString)) } mkString "&")
+    MDC.put(RequestSupport.CGI_PARAMS, cgiParams map { case (k, v) ⇒ "%s=%s".format(%-(k), %-(v)) } mkString "&")
   }
 
   def cgiParams = request get CgiParamsKey map (_.asInstanceOf[Map[String, String]]) getOrElse Map.empty
