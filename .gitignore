@@ -41,3 +41,6 @@ dist
 .ensime_port
 *.sublime-project
 logback-akka.sublime-workspace
+.cache
+.classpath
+.project
