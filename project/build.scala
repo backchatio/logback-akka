@@ -30,7 +30,7 @@ object ShellPrompt {
 object LogbackAkkaSettings {
   val buildOrganization = "com.mojolly.logback"
   val buildScalaVersion = "2.9.1"
-  val buildVersion      = "0.7.3-SNAPSHOT"
+  val buildVersion      = "0.7.4-SNAPSHOT"
 
   lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
     formatPreferences in Compile := formattingPreferences,
@@ -101,7 +101,7 @@ object LogbackAkkaSettings {
       libraryDependencies ++= compilerPlugins,
       autoCompilerPlugins := true,
       parallelExecution in Test := false,
-      publishTo <<= (version) { version: String => 
+      publishTo <<= (version) { version: String =>
         val nexus = "http://nexus.scala-tools.org/content/repositories/"
         if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus+"snapshots/") 
         else                                   Some("releases" at nexus+"releases/")
