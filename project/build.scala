@@ -86,7 +86,7 @@ object LogbackAkkaSettings {
         "se.scalablesolutions.akka" % "akka-stm" % "1.2" % "test",
         "org.slf4j" % "slf4j-api" % "1.6.1",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
-        "ch.qos.logback" % "logback-classic" % "0.9.29",
+        "ch.qos.logback" % "logback-classic" % "1.0.0",
         "redis.clients" % "jedis" % "1.5.2" % "provided"
       ),
       libraryDependencies <+= (scalaVersion) {
@@ -124,9 +124,6 @@ object LogbackAkkaSettings {
           "Implementation-Vendor" -> "Mojolly Ltd.",
           "Implementation-Url" -> "https://backchat.io"
          )
-    },
-    pomExtra <<= (pomExtra, name, description) { (extra, title, desc) => extra ++ Seq(
-      <name>{title}</name>, <description>{desc}</description>)
     })
  
   val projectSettings = buildSettings ++ packageSettings
