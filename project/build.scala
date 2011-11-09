@@ -87,6 +87,7 @@ object LogbackAkkaSettings {
         "org.slf4j" % "slf4j-api" % "1.6.1",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "1.0.0",
+        "junit" % "junit" % "4.10",
         "redis.clients" % "jedis" % "1.5.2" % "provided"
       ),
       libraryDependencies <+= (scalaVersion) {
@@ -106,7 +107,12 @@ object LogbackAkkaSettings {
         if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus+"snapshots/") 
         else                                   Some("releases" at nexus+"releases/")
       },
-      shellPrompt  := ShellPrompt.buildShellPrompt)
+      shellPrompt  := ShellPrompt.buildShellPrompt,
+      testOptions := Seq(
+        Tests.Argument("console", "junitxml")),
+      testOptions <+= crossTarget map { ct =>
+        Tests.Setup { () => System.setProperty("specs2.junit.outDir", new File(ct, "specs-reports").getAbsolutePath) }
+      })
 
   val packageSettings = Seq (
     packageOptions <<= (packageOptions, name, version, organization) map {
