@@ -30,7 +30,7 @@ object ShellPrompt {
 object LogbackAkkaSettings {
   val buildOrganization = "com.mojolly.logback"
   val buildScalaVersion = "2.9.1"
-  val buildVersion      = "0.7.4-SNAPSHOT"
+  val buildVersion      = "0.7.6-SNAPSHOT"
 
   lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
     formatPreferences in Compile := formattingPreferences,
@@ -80,14 +80,14 @@ object LogbackAkkaSettings {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % "2.0.1" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
-        "com.ning" % "async-http-client" % "1.6.4",
+        "com.ning" % "async-http-client" % "1.6.5",
         "org.scala-tools.time" %% "time" % "0.5",
-        "se.scalablesolutions.akka" % "akka-actor" % "1.2",
+        "se.scalablesolutions.akka" % "akka-actor" % "1.2" % "provided",
         "se.scalablesolutions.akka" % "akka-stm" % "1.2" % "test",
-        "org.slf4j" % "slf4j-api" % "1.6.1",
+        "org.slf4j" % "slf4j-api" % "1.6.4",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "1.0.0",
-        "junit" % "junit" % "4.10",
+        "junit" % "junit" % "4.10" % "test",
         "redis.clients" % "jedis" % "1.5.2" % "provided"
       ),
       libraryDependencies <+= (scalaVersion) {
