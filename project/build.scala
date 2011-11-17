@@ -30,7 +30,7 @@ object ShellPrompt {
 object LogbackAkkaSettings {
   val buildOrganization = "com.mojolly.logback"
   val buildScalaVersion = "2.9.1"
-  val buildVersion      = "0.7.6-SNAPSHOT"
+  val buildVersion      = "0.7.7-SNAPSHOT"
 
   lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
     formatPreferences in Compile := formattingPreferences,
@@ -96,7 +96,7 @@ object LogbackAkkaSettings {
       },
       libraryDependencies <+= (scalaVersion) {
         case "2.9.0-1" => "net.liftweb" %% "lift-json" % "2.4-M3"
-        case "2.9.1" => "net.liftweb" %% "lift-json" % "2.4-M4"
+        case "2.9.1" => "net.liftweb" %% "lift-json" % "2.4-M5"
       },
       crossScalaVersions := Seq("2.9.1", "2.9.0-1"),
       libraryDependencies ++= compilerPlugins,
