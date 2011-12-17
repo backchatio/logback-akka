@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 import com.typesafe.sbtscalariform._
 import ScalariformPlugin._
+import ScalariformKeys._
 
 // Shell prompt which show the current project, git branch and build version
 // git magic from Daniel Sobral, adapted by Ivan Porto Carrero to also work with git flow branches
@@ -30,11 +31,11 @@ object ShellPrompt {
 object LogbackAkkaSettings {
   val buildOrganization = "com.mojolly.logback"
   val buildScalaVersion = "2.9.1"
-  val buildVersion      = "0.7.7-SNAPSHOT"
+  val buildVersion      = "0.8.0-SNAPSHOT"
 
   lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
-    formatPreferences in Compile := formattingPreferences,
-    formatPreferences in Test    := formattingPreferences
+    preferences in Compile := formattingPreferences,
+    preferences in Test    := formattingPreferences
   )
 
   def formattingPreferences = {
@@ -56,7 +57,7 @@ object LogbackAkkaSettings {
   )
 
   val buildSettings = Defaults.defaultSettings ++ formatSettings ++ Seq(
-      name := "logback-akka",
+      name := "logback-ext",
       version := buildVersion,
       organization := buildOrganization,
       scalaVersion := buildScalaVersion,
@@ -72,18 +73,15 @@ object LogbackAkkaSettings {
       resolvers ++= Seq(
         "GlassFish Repo" at "http://download.java.net/maven/glassfish/",
         "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-        "ScalaTools Snapshots" at "http://scala-tools.org/repo-snapshots",
-        "Akka Repo" at "http://akka.io/repository"
+        "ScalaTools Snapshots" at "http://scala-tools.org/repo-snapshots"
       ),
       //retrieveManaged := true,
-      (excludeFilter in formatSources) <<= (excludeFilter) (_ || "*Spec.scala"),
+      (excludeFilter in format) <<= (excludeFilter) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % "2.0.1" % "provided",
+        "org.scalatra" %% "scalatra" % "2.1.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
         "com.ning" % "async-http-client" % "1.6.5",
-        "org.scala-tools.time" %% "time" % "0.5",
-        "se.scalablesolutions.akka" % "akka-actor" % "1.2" % "provided",
-        "se.scalablesolutions.akka" % "akka-stm" % "1.2" % "test",
+        "org.scala-tools.time" %% "time" % "0.5" % "provided",
         "org.slf4j" % "slf4j-api" % "1.6.4",
         "org.slf4j" % "log4j-over-slf4j" % "1.6.4",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",

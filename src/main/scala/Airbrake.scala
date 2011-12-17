@@ -19,12 +19,8 @@
 
 package mojolly.logback
 
-import akka.actor._
-import Actor._
-
 import com.ning.http.client.filter.{ IOExceptionFilter, FilterContext, ResponseFilter }
 import com.ning.http.client._
-import akka.config.Config
 import ch.qos.logback.classic.spi.ILoggingEvent
 import reflect.BeanProperty
 import ch.qos.logback.core.{ UnsynchronizedAppenderBase, LayoutBase }
@@ -201,7 +197,7 @@ class AirbrakeAppender[E] extends UnsynchronizedAppenderBase[E] {
     }
     if (!filter.isStarted) filter.start()
     _projectRoot = {
-      val pr = Config.HOME getOrElse (new File(".").getCanonicalPath)
+      val pr = (new File(".").getCanonicalPath)
       if (pr == null || pr.trim.isEmpty) {
         None
       } else Some(pr)
@@ -212,15 +208,21 @@ class AirbrakeAppender[E] extends UnsynchronizedAppenderBase[E] {
   }
 
   private def initEnvironment = {
-    environmentName = if (LogbackActor.environment == null || LogbackActor.environment.trim.isEmpty) {
-      if (environmentName == null || environmentName.trim.isEmpty) {
-        LogbackActor.readEnvironmentKey(addWarn _)
-      } else {
-        environmentName
-      }
-    } else LogbackActor.environment
-    LogbackActor.environment = environmentName
+    environmentName =
+      ep("BACKCHAT_MODE") orElse ep("AKKA_MODE") orElse sp("backchat.mode") orElse sp("akka.mode") getOrElse "development"
     environmentName
+  }
+  
+  private def ep(key: String) = sys.env.get(key) match {
+    case Some(null | "") => None
+    case Some(v) if v.trim.isEmpty => None
+    case a => a
+  }
+  
+  private def sp(key: String) = sys.props.get(key) match {
+    case Some(null | "") => None
+    case Some(v) if v.trim.isEmpty => None
+    case a => a
   }
 
   private def projectRoot: Option[String] = _projectRoot

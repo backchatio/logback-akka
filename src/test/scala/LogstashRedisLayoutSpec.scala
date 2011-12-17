@@ -23,12 +23,9 @@ import org.specs2.Specification
 import org.specs2.specification.Around
 import org.specs2.execute.Result
 import org.slf4j.helpers.MarkerIgnoringBase
-import org.multiverse.api.latches.StandardLatch
-import mojolly.logback.StringListAppender
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.util.StatusPrinter
 import collection.JavaConversions._
-import java.util.concurrent.{ ConcurrentSkipListSet, TimeUnit }
 import reflect.BeanProperty
 import ch.qos.logback.core.{ Layout, AppenderBase }
 import collection.mutable.ListBuffer
@@ -37,10 +34,31 @@ import ch.qos.logback.classic.LoggerContext
 import net.liftweb.json._
 import java.lang.RuntimeException
 import org.specs2.matcher.MustMatchers
+import java.util.concurrent.{CountDownLatch, ConcurrentSkipListSet, TimeUnit}
+
+object StringListAppender {
+  var messages = ListBuffer[String]()
+  var latch: Option[CountDownLatch] = None
+}
+class StringListAppender[E] extends AppenderBase[E] {
+  import StringListAppender._
+
+  @BeanProperty
+  var layout: Layout[E] = _
+
+  override def start() {
+    Option(layout).filter(_.isStarted).foreach(_ ⇒ super.start())
+  }
+
+  def append(p1: E) {
+    messages += layout.doLayout(p1)
+    latch foreach { _.countDown() }
+  }
+}
 
 object StringListAppender2 {
   val messages = ListBuffer[String]()
-  var latch: Option[StandardLatch] = None
+  var latch: Option[CountDownLatch] = None
 }
 class StringListAppender2[E] extends AppenderBase[E] {
   import StringListAppender2._
@@ -54,7 +72,7 @@ class StringListAppender2[E] extends AppenderBase[E] {
 
   def append(p1: E) {
     messages += layout.doLayout(p1)
-    latch foreach { _.open() }
+    latch foreach { _.countDown() }
   }
 }
 class LogstashRedisLayoutSpec extends Specification {
@@ -72,7 +90,7 @@ case class withLogger(loggerName: String) extends MustMatchers {
   implicit val formats = DefaultFormats
   var loggerContext: LoggerContext = _
   var logger: Logger = _
-  val latch = new StandardLatch
+  val latch = new CountDownLatch(1)
 
   def around(t: ⇒ Result): Result = {
     loggerContext = new LoggerContext
@@ -95,7 +113,7 @@ case class withLogger(loggerName: String) extends MustMatchers {
     around {
       val ms = "this is a a message with a [fabricated] param"
       logger.info(ms)
-      (latch.tryAwait(2, TimeUnit.SECONDS) must beTrue) and {
+      (latch.await(2, TimeUnit.SECONDS) must beTrue) and {
         val js = JsonParser.parse(StringListAppender2.messages.head)
         (js \ "@message").extract[String] must_== ms
       }
@@ -106,7 +124,7 @@ case class withLogger(loggerName: String) extends MustMatchers {
     val ms = "this is a message for an error"
     try { throw new RuntimeException("the exception message") }
     catch { case e ⇒ logger.error(ms, e) }
-    (latch.tryAwait(2, TimeUnit.SECONDS) must beTrue) and {
+    (latch.await(2, TimeUnit.SECONDS) must beTrue) and {
       val js = JsonParser.parse(StringListAppender2.messages.head)
       val msgMatch = (js \ "@message").extract[String] must_== ms
       val err = (js \ "@fields")
