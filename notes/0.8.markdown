@@ -1,0 +1,6 @@
+## Logback Ext
+
+* renames project from logback-akka to logback-ext
+* removes async appender based on akka
+* Adds a colorizer for the log level in the console
+* Adds ability for sending alerts to Flowdock
