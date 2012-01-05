@@ -133,4 +133,9 @@ class FlowdockAppender[E] extends UnsynchronizedAppenderBase[E] with FlowdockApp
       .addParameter("content", msg.content)
     req.execute
   }
+
+  override def stop() {
+    super.stop()
+    http.close()
+  }
 }
