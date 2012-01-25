@@ -44,3 +44,5 @@ logback-akka.sublime-workspace
 .cache
 .classpath
 .project
+.settings
+.target

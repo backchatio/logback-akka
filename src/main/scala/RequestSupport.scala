@@ -43,7 +43,7 @@ trait RequestSupport {
 
   object Request {
     def apply(appName: String, evt: ILoggingEvent): Option[Request] = {
-      val mdc = evt.getMdc.asScala
+      val mdc = evt.getMDCPropertyMap.asScala
       mdc.get(REQUEST_PATH) map { path ⇒
         Request(
           path,

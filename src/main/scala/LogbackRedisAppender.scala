@@ -58,7 +58,7 @@ class LogstashRedisLayout[E] extends LayoutBase[E] {
 
       val fields = {
         exceptionFields(event) merge {
-          val mdc = { if (event.getMdc == null) JNothing else Extraction.decompose(event.getMdc.asScala) }
+          val mdc = { if (event.getMDCPropertyMap == null) JNothing else Extraction.decompose(event.getMDCPropertyMap.asScala) }
           (mdc merge
             ("thread_name" -> event.getThreadName) ~
             ("level" -> event.getLevel.toString) ~
