@@ -34,8 +34,7 @@ object LogbackAkkaSettings {
   val buildVersion      = "0.8.0"
 
   lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
-    preferences in Compile := formattingPreferences,
-    preferences in Test    := formattingPreferences
+    preferences in ThisProject := formattingPreferences
   )
 
   def formattingPreferences = {
@@ -56,7 +55,7 @@ object LogbackAkkaSettings {
     compilerPlugin("org.scala-tools.sxr" % "sxr_2.9.0" % "0.2.7")
   )
 
-  val buildSettings = Defaults.defaultSettings ++ formatSettings ++ Seq(
+  val buildSettings = Defaults.defaultSettings ++ Seq(
       name := "logback-ext",
       version := buildVersion,
       organization := buildOrganization,
@@ -84,6 +83,7 @@ object LogbackAkkaSettings {
         "org.scala-tools.time" %% "time" % "0.5" % "provided",
         "org.slf4j" % "slf4j-api" % "1.6.4",
         "org.slf4j" % "log4j-over-slf4j" % "1.6.4",
+        "org.slf4j" % "jcl-over-slf4j" % "1.6.4",
         "com.weiglewilczek.slf4s" %% "slf4s" % "1.0.7",
         "ch.qos.logback" % "logback-classic" % "1.0.0",
         "junit" % "junit" % "4.10" % "test",
