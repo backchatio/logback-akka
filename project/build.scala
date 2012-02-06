@@ -1,8 +1,8 @@
 import sbt._
 import Keys._
-import com.typesafe.sbtscalariform._
-import ScalariformPlugin._
-import ScalariformKeys._
+// import com.typesafe.sbtscalariform._
+// import ScalariformPlugin._
+// import ScalariformKeys._
 
 // Shell prompt which show the current project, git branch and build version
 // git magic from Daniel Sobral, adapted by Ivan Porto Carrero to also work with git flow branches
@@ -33,20 +33,20 @@ object LogbackAkkaSettings {
   val buildScalaVersion = "2.9.1"
   val buildVersion      = "0.8.0"
 
-  lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
-    preferences in ThisProject := formattingPreferences
-  )
+  // lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
+  //   preferences in ThisProject := formattingPreferences
+  // )
 
-  def formattingPreferences = {
-    import scalariform.formatter.preferences._
-    (FormattingPreferences()
-        setPreference(IndentSpaces, 2)
-        setPreference(AlignParameters, true)
-        setPreference(AlignSingleLineCaseStatements, true)
-        setPreference(DoubleIndentClassDeclaration, true)
-        setPreference(RewriteArrowSymbols, true)
-        setPreference(PreserveSpaceBeforeArguments, true))
-  }
+  // def formattingPreferences = {
+  //   import scalariform.formatter.preferences._
+  //   (FormattingPreferences()
+  //       setPreference(IndentSpaces, 2)
+  //       setPreference(AlignParameters, true)
+  //       setPreference(AlignSingleLineCaseStatements, true)
+  //       setPreference(DoubleIndentClassDeclaration, true)
+  //       setPreference(RewriteArrowSymbols, true)
+  //       setPreference(PreserveSpaceBeforeArguments, true))
+  // }
 
   val description = SettingKey[String]("description")
 
@@ -61,6 +61,7 @@ object LogbackAkkaSettings {
       organization := buildOrganization,
       scalaVersion := buildScalaVersion,
       javacOptions ++= Seq("-Xlint:unchecked"),
+      exportJars := true,
       testOptions in Test += Tests.Setup( () => System.setProperty("akka.mode", "test") ),
       scalacOptions ++= Seq(
         "-optimize",
@@ -75,7 +76,7 @@ object LogbackAkkaSettings {
         "ScalaTools Snapshots" at "http://scala-tools.org/repo-snapshots"
       ),
       //retrieveManaged := true,
-      (excludeFilter in format) <<= (excludeFilter) (_ || "*Spec.scala"),
+      // (excludeFilter in format) <<= (excludeFilter) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % "2.1.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
