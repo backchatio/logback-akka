@@ -1,5 +1,7 @@
 import sbt._
 import Keys._
+import xml.Group
+
 // import com.typesafe.sbtscalariform._
 // import ScalariformPlugin._
 // import ScalariformKeys._
@@ -29,9 +31,9 @@ object ShellPrompt {
 }
 
 object LogbackAkkaSettings {
-  val buildOrganization = "com.mojolly.logback"
+  val buildOrganization = "io.mojolly.logback"
   val buildScalaVersion = "2.9.1"
-  val buildVersion      = "0.8.0"
+  val buildVersion      = "0.8.1"
 
   // lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
   //   preferences in ThisProject := formattingPreferences
@@ -92,11 +94,11 @@ object LogbackAkkaSettings {
       ),
       libraryDependencies <+= (scalaVersion) {
         case "2.9.0-1" => "org.specs2" %% "specs2" % "1.5" % "test"
-        case _ => "org.specs2" %% "specs2" % "1.6.1" % "test"
+        case _ => "org.specs2" %% "specs2" % "1.7.1" % "test"
       },
       libraryDependencies <+= (scalaVersion) {
-        case "2.9.0-1" => "net.liftweb" %% "lift-json" % "2.4-M3"
-        case "2.9.1" => "net.liftweb" %% "lift-json" % "2.4-M5"
+        case "2.9.0-1" => "net.liftweb" %% "lift-json" % "2.4"
+        case "2.9.1" => "net.liftweb" %% "lift-json" % "2.4"
       },
       crossScalaVersions := Seq("2.9.1", "2.9.0-1"),
       libraryDependencies ++= compilerPlugins,
@@ -118,8 +120,8 @@ object LogbackAkkaSettings {
     packageOptions <<= (packageOptions, name, version, organization) map {
       (opts, title, version, vendor) =>
          opts :+ Package.ManifestAttributes(
-          "Created-By" -> System.getProperty("user.name"),
-          "Built-By" -> "Simple Build Tool",
+          "Created-By" -> "Simple Build Tool",
+          "Built-By" -> System.getProperty("user.name"),
           "Build-Jdk" -> System.getProperty("java.version"),
           "Specification-Title" -> title,
           "Specification-Vendor" -> "Mojolly Ltd.",
@@ -130,8 +132,40 @@ object LogbackAkkaSettings {
           "Implementation-Vendor" -> "Mojolly Ltd.",
           "Implementation-Url" -> "https://backchat.io"
          )
-    })
- 
+    },
+    homepage := Some(url("https://backchat.io")),
+    startYear := Some(2010),
+    licenses := Seq(("MIT", url("http://github.com/mojolly/logback-akka/raw/HEAD/LICENSE"))),
+    pomExtra <<= (pomExtra, name, description) {(pom, name, desc) => pom ++ Group(
+      <scm>
+        <connection>scm:git:git://github.com/mojolly/logback-akka.git</connection>
+        <developerConnection>scm:git:git@github.com:mojolly/logback-akka.git</developerConnection>
+        <url>https://github.com/mojolly/logback-akka</url>
+      </scm>
+      <developers>
+        <developer>
+          <id>casualjim</id>
+          <name>Ivan Porto Carrero</name>
+          <url>http://flanders.co.nz/</url>
+        </developer>
+        <developer>
+          <id>sdb</id>
+          <name>Stefan De Boey</name>
+          <url>http://ellefant.be</url>
+        </developer>
+      </developers>
+    )},
+    publishMavenStyle := true,
+    publishTo <<= version { (v: String) =>
+      val nexus = "https://oss.sonatype.org/"
+      if (v.trim.endsWith("SNAPSHOT"))
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    },
+    publishArtifact in Test := false,
+    pomIncludeRepository := { x => false })
+
   val projectSettings = buildSettings ++ packageSettings
 }
 
