@@ -33,7 +33,7 @@ object ShellPrompt {
 object LogbackAkkaSettings {
   val buildOrganization = "io.mojolly.logback"
   val buildScalaVersion = "2.9.1"
-  val buildVersion      = "0.8.2"
+  val buildVersion      = "0.8.3"
 
   // lazy val formatSettings = ScalariformPlugin.settings ++ Seq(
   //   preferences in ThisProject := formattingPreferences
@@ -82,7 +82,7 @@ object LogbackAkkaSettings {
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % "2.1.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
-        "com.ning" % "async-http-client" % "1.6.5",
+        "com.ning" % "async-http-client" % "1.7.0",
         "org.scala-tools.time" %% "time" % "0.5" % "provided",
         "org.slf4j" % "slf4j-api" % "1.6.4",
         "org.slf4j" % "log4j-over-slf4j" % "1.6.4",
@@ -94,7 +94,7 @@ object LogbackAkkaSettings {
       ),
       libraryDependencies <+= (scalaVersion) {
         case "2.9.0-1" => "org.specs2" %% "specs2" % "1.5" % "test"
-        case _ => "org.specs2" %% "specs2" % "1.7.1" % "test"
+        case _ => "org.specs2" %% "specs2" % "1.8.1" % "test"
       },
       libraryDependencies <+= (scalaVersion) {
         case "2.9.0-1" => "net.liftweb" %% "lift-json" % "2.4"
