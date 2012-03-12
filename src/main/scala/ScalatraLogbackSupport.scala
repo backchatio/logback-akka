@@ -23,7 +23,6 @@ import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
 import org.scalatra.{ ScalatraKernel, Handler, MatchedRoute }
 import ScalatraKernel.MultiParamsKey
 import org.scalatra.util.MultiMap
-import util.DynamicVariable
 import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
@@ -40,7 +39,7 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
 
   abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
     val realMultiParams = req.getParameterMap.asInstanceOf[JMap[String, Array[String]]].toMap transform { (k, v) ⇒ v: Seq[String] }
-    _request.withValue(req) {
+    withRequest(req) {
       request(MultiParamsKey) = MultiMap(Map() ++ realMultiParams)
       request(CgiParamsKey) = readCgiParams(req)
       fillMdc()
@@ -71,7 +70,7 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
     "AUTH_TYPE" -> req.getAuthType,
     "CONTENT_LENGTH" -> req.getContentLength.toString,
     "CONTENT_TYPE" -> req.getContentType,
-    "DOCUMENT_ROOT" -> servletContext.getRealPath(servletContext.getContextPath),
+    "DOCUMENT_ROOT" -> applicationContext.getRealPath(applicationContext.getContextPath),
     "PATH_INFO" -> req.getPathInfo,
     "PATH_TRANSLATED" -> req.getPathTranslated,
     "QUERY_STRING" -> req.getQueryString,
@@ -83,7 +82,7 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
     "SERVER_NAME" -> req.getServerName,
     "SERVER_PORT" -> req.getServerPort.toString,
     "SERVER_PROTOCOL" -> req.getProtocol,
-    "SERVER_SOFTWARE" -> servletContext.getServerInfo)
+    "SERVER_SOFTWARE" -> applicationContext.getServerInfo)
 
   private def %-(s: String) = if (s == null || s.trim.isEmpty) "" else URLEncoder.encode(s, "UTF-8")
 }
