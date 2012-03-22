@@ -72,6 +72,7 @@ object LogbackAkkaSettings {
         "-Xcheckinit",
         "-encoding", "utf8",
         "-P:continuations:enable"),
+      externalResolvers <<= resolvers map { rs => Resolver.withDefaultResolvers(rs, mavenCentral = true, scalaTools = false) },
       resolvers ++= Seq(
         "GlassFish Repo" at "http://download.java.net/maven/glassfish/",
         "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
