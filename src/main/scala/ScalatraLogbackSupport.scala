@@ -20,24 +20,25 @@
 package mojolly.logback
 
 import javax.servlet.http.{ HttpServletResponse, HttpServletRequest }
-import org.scalatra.{ ScalatraKernel, Handler, MatchedRoute }
-import ScalatraKernel.MultiParamsKey
+import org.scalatra.{ ScalatraKernel, Handler, MatchedRoute, MultiParamsKey }
 import org.scalatra.util.MultiMap
 import org.slf4j.MDC
 import java.net.URLEncoder
 import com.weiglewilczek.slf4s.Logging
 import collection.JavaConversions._
 import java.util.{ Map ⇒ JMap }
+import org.scalatra.servlet._
+
 object ScalatraLogbackSupport {
 
   val CgiParamsKey = "com.mojolly.logback.ScalatraLogbackSupport"
 }
 
-trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel ⇒
+trait ScalatraLogbackSupport extends ServletHandler with Logging { self: ServletBase ⇒
 
   import ScalatraLogbackSupport.CgiParamsKey
 
-  abstract override def handle(req: HttpServletRequest, res: HttpServletResponse) {
+  abstract override def handle(req: RequestT, res: ResponseT) {
     val realMultiParams = req.getParameterMap.asInstanceOf[JMap[String, Array[String]]].toMap transform { (k, v) ⇒ v: Seq[String] }
     withRequest(req) {
       request(MultiParamsKey) = MultiMap(Map() ++ realMultiParams)
@@ -50,9 +51,9 @@ trait ScalatraLogbackSupport extends Handler with Logging { self: ScalatraKernel
 
   override protected def withRouteMultiParams[S](matchedRoute: Option[MatchedRoute])(thunk: ⇒ S): S = {
     val originalParams = multiParams
-    request(ScalatraKernel.MultiParamsKey) = originalParams ++ matchedRoute.map(_.multiParams).getOrElse(Map.empty)
+    request(MultiParamsKey) = originalParams ++ matchedRoute.map(_.multiParams).getOrElse(Map.empty)
     fillMdc()
-    try { thunk } finally { request(ScalatraKernel.MultiParamsKey) = originalParams }
+    try { thunk } finally { request(MultiParamsKey) = originalParams }
   }
 
   protected def fillMdc() { // Do this twice so that we get all the route params if they are available and applicable

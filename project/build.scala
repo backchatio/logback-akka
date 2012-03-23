@@ -81,7 +81,7 @@ object LogbackAkkaSettings {
       //retrieveManaged := true,
       // (excludeFilter in format) <<= (excludeFilter) (_ || "*Spec.scala"),
       libraryDependencies ++= Seq(
-        "org.scalatra" %% "scalatra" % "2.1.0-SNAPSHOT" % "provided",
+        "org.scalatra" % "scalatra" % "2.1.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
         "com.ning" % "async-http-client" % "1.7.0",
         "org.scala-tools.time" %% "time" % "0.5" % "provided",
