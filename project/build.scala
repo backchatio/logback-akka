@@ -31,7 +31,7 @@ object ShellPrompt {
 }
 
 object LogbackAkkaSettings {
-  val buildOrganization = "io.mojolly.logback"
+  val buildOrganization = "io.backchat.logback"
   val buildScalaVersion = "2.9.1"
   val buildVersion      = "0.8.4-SNAPSHOT"
 
@@ -83,7 +83,7 @@ object LogbackAkkaSettings {
       libraryDependencies ++= Seq(
         "org.scalatra" % "scalatra" % "2.1.0-SNAPSHOT" % "provided",
         "org.glassfish" % "javax.servlet" % "3.1" % "provided",
-        "com.ning" % "async-http-client" % "1.7.0",
+        "com.ning" % "async-http-client" % "1.7.2",
         "org.scala-tools.time" %% "time" % "0.5" % "provided",
         "org.slf4j" % "slf4j-api" % "1.6.4",
         "org.slf4j" % "log4j-over-slf4j" % "1.6.4",
